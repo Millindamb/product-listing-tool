@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API = import.meta.env.REACT_APP_API_URL || "https://austpek-backend.onrender.com/api";
+const API = "http://localhost:5000/api";
 
 // ─── BUSINESS RULES (mirrored from backend for instant UI validation) ─────────
 const MARGIN_RULES_FE = {
@@ -184,7 +184,7 @@ function PricingPanel({ category, brand, onResult }) {
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-dollar-sign"></i> Pricing Calculator</SectionTitle>
+      <SectionTitle>💰 Pricing Calculator</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         <Field label="Cost Price (CP)" hint="Supplier's price — GST added automatically if not included">
           <Input value={cpRaw} onChange={setCp} placeholder="90.00" type="number" />
@@ -349,13 +349,13 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash",info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B",info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash", tag:"Free · Supports images", color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B", tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-file-pen"></i> Description Builder</SectionTitle>
+      <SectionTitle>📝 Description Builder</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         <Field label="Available in Colours">
           <Input value={colours} onChange={setColours} placeholder="Chrome, Black, Gold" />
@@ -387,7 +387,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}><i className="fa-solid fa-robot"></i>  AI Description (75 words)</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>🤖 AI Description (75 words)</div>
 
         {/* Model selector cards */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
@@ -410,7 +410,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             </div>
             <label style={{ display:"inline-block", padding:"7px 14px", borderRadius:8, fontSize:12,
               fontWeight:600, background:"#1a1a1a", border:"1px dashed #444", color:"#aaa", cursor:"pointer" }}>
-              <i className="fa-solid fa-paperclip"></i> Choose Images (max 2)
+              📎 Choose Images (max 2)
               <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display:"none" }} />
             </label>
             {previews.length > 0 && (
@@ -439,7 +439,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         )}
 
         <Btn onClick={generateAI} disabled={aiLoading}>
-          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].label}...` : `Generate with ${MODEL_INFO[aiModel].info}`}
+          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].label}...` : `Generate with ${MODEL_INFO[aiModel].label}`}
         </Btn>
 
         {aiError && (
@@ -469,7 +469,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
           <span style={{ fontSize:12, fontWeight:700, color:"#888" }}>Full Description Preview</span>
           <Btn onClick={copyAll} variant={copied?"success":"ghost"} small>
-            {copied ? <><i className="fa-solid fa-check"></i> Copied!</> : <><i className="fa-regular fa-copy"></i> Copy All</>}
+            {copied ? "✓ Copied!" : "📋 Copy All"}
           </Btn>
         </div>
         <pre style={{ color:"#ccc", fontSize:12, lineHeight:1.7, whiteSpace:"pre-wrap", margin:0, fontFamily:"inherit" }}>
@@ -497,7 +497,7 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-tags"></i> Tags & Metafields</SectionTitle>
+      <SectionTitle>🏷️ Tags & Metafields</SectionTitle>
       <Field label="Tags (comma separated — paste into Shopify)">
         <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333", position:"relative" }}>
           <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>{tags.join(", ") || "— fill product details —"}</div>
@@ -520,31 +520,180 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
   );
 }
 
-// ─── PRODUCT LIST TABLE ───────────────────────────────────────────────────────
-function ProductList({ products, onDelete, onExport }) {
+
+// ─── REPRICE CALCULATOR (Special Guidelines — Competitive Pricing) ────────────
+function RepriceCalculator() {
+  const [cp, setCp] = useState("");
+  const [rrp, setRrp] = useState("");
+  const [currentSP, setCurrentSP] = useState("");
+  const [minMargin, setMinMargin] = useState("");
+  const [c1, setC1] = useState("");
+  const [c2, setC2] = useState("");
+  const [result, setResult] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const calculate = async () => {
+    if (!cp || !minMargin) return;
+    setLoading(true);
+    const competitors = [c1, c2].filter(Boolean).map(Number);
+    try {
+      const { data } = await axios.post(`${API}/export/reprice`, {
+        cp: +cp, rrp: rrp ? +rrp : null,
+        currentSP: +currentSP, minMargin: +minMargin,
+        competitorPrices: competitors,
+      });
+      setResult(data);
+    } catch {
+      // Fallback: calculate in browser
+      const results = competitors.map((price, i) => {
+        const potentialMargin = price - +cp;
+        const canReprice = potentialMargin >= +minMargin;
+        const newSP = canReprice
+          ? (rrp ? Math.min(price, +rrp) : price)
+          : Math.round(+cp + +minMargin);
+        return {
+          competitor: i + 1, competitorPrice: price,
+          potentialMargin: +potentialMargin.toFixed(2),
+          canReprice, newSP: Math.round(newSP),
+          reason: canReprice
+            ? `Potential margin $${potentialMargin.toFixed(2)} ≥ min margin $${minMargin}`
+            : `Margin too low — use CP + min margin`,
+        };
+      });
+      const valid = results.filter(r=>r.canReprice).map(r=>r.newSP);
+      const recommendedSP = valid.length > 0 ? Math.min(...valid) : Math.round(+cp + +minMargin);
+      setResult({ cp:+cp, rrp:rrp?+rrp:null, currentSP:+currentSP, minMargin:+minMargin,
+        results, recommendedSP, saving: currentSP ? Math.round(+currentSP - recommendedSP) : 0 });
+    }
+    setLoading(false);
+  };
+
+  return (
+    <Card>
+      <SectionTitle>⚡ Competitive Repricing Calculator</SectionTitle>
+      <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
+        From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
+      </div>
+      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:12 }}>
+        <Field label="Cost Price (inc GST)">
+          <Input value={cp} onChange={setCp} placeholder="220.00" type="number" />
+        </Field>
+        <Field label="RRP (optional)">
+          <Input value={rrp} onChange={setRrp} placeholder="350.00" type="number" />
+        </Field>
+        <Field label="Current SP">
+          <Input value={currentSP} onChange={setCurrentSP} placeholder="350.00" type="number" />
+        </Field>
+        <Field label="Min Margin for Category">
+          <Input value={minMargin} onChange={setMinMargin} placeholder="e.g. 65 for Basins" type="number" />
+        </Field>
+        <Field label="Competitor 1 Price">
+          <Input value={c1} onChange={setC1} placeholder="315.00" type="number" />
+        </Field>
+        <Field label="Competitor 2 Price">
+          <Input value={c2} onChange={setC2} placeholder="299.00" type="number" />
+        </Field>
+      </div>
+      <Btn onClick={calculate} disabled={loading || !cp || !minMargin}>
+        {loading ? "Calculating..." : "Calculate Reprice"}
+      </Btn>
+
+      {result && (
+        <div style={{ marginTop:16 }}>
+          {result.results.map(r => (
+            <div key={r.competitor} style={{
+              background:"#0d0d0d", borderRadius:8, padding:14, marginBottom:8,
+              border:`1px solid ${r.canReprice?"#16a34a44":"#ef444433"}`
+            }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
+                <span style={{ fontWeight:700, color:"#fff" }}>Competitor {r.competitor} — ${r.competitorPrice}</span>
+                <Badge ok={r.canReprice}>{r.canReprice ? "✓ Can Reprice" : "✗ Cannot Match"}</Badge>
+              </div>
+              <div style={{ fontSize:12, color:"#888" }}>{r.reason}</div>
+              <div style={{ fontSize:13, color:"#c9933a", fontWeight:700, marginTop:4 }}>
+                New SP → ${r.newSP}
+              </div>
+            </div>
+          ))}
+          <div style={{ background:"#c9933a22", border:"1px solid #c9933a44", borderRadius:8, padding:14, marginTop:8 }}>
+            <div style={{ fontSize:12, color:"#c9933a", fontWeight:700, marginBottom:4 }}>Recommended Final SP</div>
+            <div style={{ fontSize:28, fontWeight:900, color:"#c9933a" }}>${result.recommendedSP}</div>
+            {result.saving > 0 && (
+              <div style={{ fontSize:12, color:"#888", marginTop:4 }}>
+                Price reduction from current: ${result.saving}
+              </div>
+            )}
+            {result.rrp && result.recommendedSP > result.rrp && (
+              <div style={{ fontSize:11, color:"#ef4444", marginTop:4 }}>
+                ⚠ Exceeds RRP ${result.rrp} — needs senior approval
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+// ─── PRODUCT LIST + EXPORT ────────────────────────────────────────────────────
+function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
   return (
     <div>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16 }}>
+      {/* Export buttons */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <div style={{ fontSize:16, fontWeight:700 }}>Product Queue ({products.length})</div>
-        <Btn onClick={onExport} variant="success">⬇ Export Google Sheet (.xlsx)</Btn>
+        <div style={{ display:"flex", gap:8 }}>
+          <Btn onClick={onExportCSV} variant="primary" disabled={products.length===0}>
+            ⬇ Shopify Import CSV
+          </Btn>
+          <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}>
+            ⬇ Final Pricing + Competitor (.xlsx)
+          </Btn>
+        </div>
       </div>
+
+      {/* Format info */}
+      <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:11, color:"#666", border:"1px solid #1a1a1a" }}>
+        <span style={{ color:"#c9933a", fontWeight:700 }}>Shopify Import CSV</span> — exact 7-column format (Title, SKU, Grams, Price, Compare At Price, Supplier URL, Cost) ready to import directly into Shopify &nbsp;·&nbsp;
+        <span style={{ color:"#16a34a", fontWeight:700 }}>Final Pricing .xlsx</span> — 3 sheets: Final Pricing + Competitor Analysis + Pricing Reference (per Special Guidelines)
+      </div>
+
       {products.length === 0 && (
-        <div style={{ textAlign:"center", color:"#555", padding:40 }}>No products yet — add one using the form</div>
+        <div style={{ textAlign:"center", color:"#555", padding:40, background:"#0d0d0d", borderRadius:10 }}>
+          No products in queue yet — add products using the Add Product tab
+        </div>
       )}
+
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {products.map((p, i) => (
-          <div key={p._id || i} style={{ background:"#111", border:"1px solid #222", borderRadius:10, padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
-            <div>
+          <div key={p._id || i} style={{
+            background:"#111", border:"1px solid #222", borderRadius:10,
+            padding:"12px 16px", display:"flex", justifyContent:"space-between",
+            alignItems:"center", flexWrap:"wrap", gap:10
+          }}>
+            <div style={{ flex:1, minWidth:200 }}>
               <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:2 }}>{p.productTitle || p.sku}</div>
               <div style={{ fontSize:11, color:"#888" }}>{p.category} · {p.brand} · SKU: {p.sku}</div>
             </div>
-            <div style={{ display:"flex", gap:12, alignItems:"center" }}>
-              <div style={{ textAlign:"right" }}>
-                <div style={{ fontSize:16, fontWeight:800, color:"#c9933a" }}>${p.sp}</div>
-                <div style={{ fontSize:11, color:"#555" }}>RRP ${p.rrp}</div>
+            <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:10, color:"#555" }}>CP (inc GST)</div>
+                <div style={{ fontSize:13, color:"#aaa" }}>${p.cpGST || "—"}</div>
               </div>
-              <Badge ok={p.marginOk}>{p.marginOk?"✓ Margin OK":"✗ Margin"}</Badge>
-              <Btn onClick={()=>onDelete(p._id||i)} variant="danger" small>✕</Btn>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:10, color:"#555" }}>SP</div>
+                <div style={{ fontSize:16, fontWeight:800, color:"#c9933a" }}>${p.sp || "—"}</div>
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:10, color:"#555" }}>RRP</div>
+                <div style={{ fontSize:13, color:"#aaa" }}>${p.rrp || "—"}</div>
+              </div>
+              <div style={{ textAlign:"center" }}>
+                <div style={{ fontSize:10, color:"#555" }}>Weight</div>
+                <div style={{ fontSize:13, color:"#aaa" }}>{p.weight ? `${p.weight}kg` : "—"}</div>
+              </div>
+              <Badge ok={p.marginOk}>{p.marginOk ? "✓ Margin" : "✗ Margin"}</Badge>
+              <Btn onClick={() => onDelete(p._id || i)} variant="danger" small>✕</Btn>
             </div>
           </div>
         ))}
@@ -576,7 +725,7 @@ export default function App() {
 
   // Load products from backend
   useEffect(() => {
-    axios.get(`${API}/products`).then(r => setProducts(r.data)).catch(()=>{});
+    axios.get(`${API}/products`).then(r => setProducts(r.data)).catch(() => {});
   }, []);
 
   const saveProduct = async () => {
@@ -587,19 +736,18 @@ export default function App() {
       brand, collection, colour, size, style,
       cpGST: pricing?.cp, rrp: pricing?.rrp, sp: pricing?.sp,
       weight: pricing?.weight, marginOk: pricing?.marginOk,
+      requiredMargin: pricing?.required,
       notes, status: "draft",
     };
     try {
       const { data } = await axios.post(`${API}/products`, payload);
       setProducts(prev => [data, ...prev]);
       setSaveMsg("✓ Product saved to queue");
-      setTimeout(()=>setSaveMsg(""), 3000);
     } catch {
-      // DB not running — save locally
       setProducts(prev => [{ ...payload, _id: Date.now() }, ...prev]);
       setSaveMsg("✓ Saved locally (DB offline)");
-      setTimeout(()=>setSaveMsg(""), 3000);
     }
+    setTimeout(() => setSaveMsg(""), 3000);
     setSaving(false);
   };
 
@@ -608,56 +756,86 @@ export default function App() {
     setProducts(prev => prev.filter(p => p._id !== id));
   };
 
-  const exportSheet = async () => {
+  // Export 1: Shopify Import CSV (exact 7-column format)
+  const exportCSV = async () => {
     try {
-      const res = await axios.post(`${API}/export/xlsx`, { products }, { responseType:"blob" });
+      const res = await axios.post(`${API}/export/shopify-csv`, { products }, { responseType: "blob" });
       const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a"); a.href = url;
-      a.download = `Austpek_Products_${Date.now()}.xlsx`; a.click();
+      const a = document.createElement("a");
+      a.href = url; a.download = `Austpek_Shopify_Import_${Date.now()}.csv`; a.click();
     } catch {
-      // fallback: build CSV in browser
-      const headers = ["SKU","Product Title","Category","Brand","CP","RRP","SP","Weight","Status"];
-      const rows = products.map(p=>[p.sku,p.productTitle,p.category,p.brand,p.cpGST,p.rrp,p.sp,p.weight,p.status]);
-      const csv = [headers,...rows].map(r=>r.join(",")).join("\n");
-      const blob = new Blob([csv],{type:"text/csv"});
+      // Browser fallback matching exact import CSV format
+      const headers = [
+        "Title","Variant SKU","Variant Grams","Variant Price",
+        "Variant Compare At Price",
+        "Supplier URL (product.metafields.custom.supplier_url)",
+        "Cost per item"
+      ];
+      const rows = products.map(p => [
+        p.productTitle || "",
+        p.sku || "",
+        p.weight ? Math.round(+p.weight * 1000) : "",
+        p.sp ? `$${Math.round(p.sp)}.00` : "",
+        p.rrp ? `$${Math.round(p.rrp)}.00` : "",
+        p.supplierUrl || "",
+        p.cpGST ? `$${Math.round(p.cpGST)}.00` : "",
+      ]);
+      const csv = [headers, ...rows].map(r => r.join(",")).join("\r\n");
+      const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href=url; a.download="Austpek_Products.csv"; a.click();
+      const a = document.createElement("a");
+      a.href = url; a.download = "Austpek_Shopify_Import.csv"; a.click();
+    }
+  };
+
+  // Export 2: Final Pricing + Competitor Analysis .xlsx
+  const exportXlsx = async () => {
+    try {
+      const res = await axios.post(`${API}/export/xlsx`, { products }, { responseType: "blob" });
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url; a.download = `Austpek_Final_Pricing_${Date.now()}.xlsx`; a.click();
+    } catch (e) {
+      alert("Export failed — make sure backend is running");
     }
   };
 
   const NAV = [
-    { key:"form", label:`+ Add Product` },
-    {key: "queue",label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>)}
+    { key: "form",    label: "➕ Add Product" },
+    { key: "queue",   label: `📋 Queue (${products.length})` },
+    { key: "reprice", label: "⚡ Reprice Tool" },
   ];
 
   return (
-    <div style={{ minHeight:"100vh", background:"#0a0a0a", color:"#fff", fontFamily:"system-ui,sans-serif" }}>
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "system-ui,sans-serif" }}>
       {/* Header */}
-      <div style={{ background:"#0d0d0d", borderBottom:"1px solid #1a1a1a", padding:"0 24px", display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
-          <div style={{ fontSize:18, fontWeight:900, color:"#c9933a", letterSpacing:1 }}>AUSTPEK</div>
-          <div style={{ fontSize:12, color:"#555", marginTop:2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>
+      <div style={{ background: "#0d0d0d", borderBottom: "1px solid #1a1a1a", padding: "0 24px",
+        display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <div style={{ fontSize: 18, fontWeight: 900, color: "#c9933a", letterSpacing: 1 }}>AUSTPEK</div>
+          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Product Listing Tool</div>
         </div>
-        <div style={{ display:"flex", gap:4 }}>
+        <div style={{ display: "flex", gap: 4 }}>
           {NAV.map(n => (
-            <button key={n.key} onClick={()=>setTab(n.key)}
-              style={{ background: tab===n.key?"#c9933a22":"transparent", border: tab===n.key?"1px solid #c9933a44":"1px solid transparent",
-                borderRadius:8, padding:"6px 16px", color: tab===n.key?"#c9933a":"#888",
-                fontSize:13, fontWeight:600, cursor:"pointer" }}>
+            <button key={n.key} onClick={() => setTab(n.key)}
+              style={{ background: tab === n.key ? "#c9933a22" : "transparent",
+                border: tab === n.key ? "1px solid #c9933a44" : "1px solid transparent",
+                borderRadius: 8, padding: "6px 16px",
+                color: tab === n.key ? "#c9933a" : "#888",
+                fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
               {n.label}
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ maxWidth:1100, margin:"0 auto", padding:"24px 16px" }}>
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }}>
 
         {/* ── ADD PRODUCT FORM ── */}
         {tab === "form" && (
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
-
-            {/* LEFT COLUMN */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
+            {/* LEFT */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               <Card>
                 <SectionTitle>📦 Product Details</SectionTitle>
                 <Field label="Supplier URL">
@@ -689,7 +867,6 @@ export default function App() {
                   <Input value={notes} onChange={setNotes} placeholder="Any special notes..." />
                 </Field>
               </Card>
-
               {category && (
                 <Card>
                   <TagsPanel category={category} brand={brand} colour={colour} size={size} style={style} productType={productType} />
@@ -697,38 +874,69 @@ export default function App() {
               )}
             </div>
 
-            {/* RIGHT COLUMN */}
-            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
+            {/* RIGHT */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {category && (
                 <Card>
                   <TitleBuilder category={category} onChange={setGeneratedTitle} />
                 </Card>
               )}
-
               <Card>
                 <PricingPanel category={category} brand={brand} onResult={setPricing} />
               </Card>
-
               {category && (
                 <Card>
                   <DescriptionBuilder title={generatedTitle} category={category} />
                 </Card>
               )}
-
-              {/* Save button */}
-              <div style={{ display:"flex", gap:12, alignItems:"center" }}>
+              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                  {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
+                  {saving ? "Saving..." : "💾 Save to Queue"}
                 </Btn>
-                {saveMsg && <span style={{ fontSize:13, color: saveMsg.includes("✓")?"#16a34a":"#ef4444" }}>{saveMsg}</span>}
+                {saveMsg && (
+                  <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>
+                    {saveMsg}
+                  </span>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* ── PRODUCT QUEUE ── */}
+        {/* ── QUEUE ── */}
         {tab === "queue" && (
-          <ProductList products={products} onDelete={deleteProduct} onExport={exportSheet} />
+          <ProductList
+            products={products}
+            onDelete={deleteProduct}
+            onExportCSV={exportCSV}
+            onExportXlsx={exportXlsx}
+          />
+        )}
+
+        {/* ── REPRICE TOOL ── */}
+        {tab === "reprice" && (
+          <div style={{ maxWidth: 700, margin: "0 auto" }}>
+            <RepriceCalculator />
+            <div style={{ marginTop: 16, background: "#0d0d0d", borderRadius: 10, padding: 16, border: "1px solid #1a1a1a" }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#c9933a", marginBottom: 10 }}>
+                Pricing Formulas (Special Guidelines)
+              </div>
+              {[
+                ["Sale Price (15% off RRP)", "= RRP × 0.85"],
+                ["Sale Price (10% off RRP)", "= RRP × 0.90"],
+                ["RRP (when not provided)", "= Sale Price × 1.10"],
+                ["Cost Price (inc GST)", "= Cost Price (ex GST) × 1.10"],
+                ["Cost Price (alt)", "= RRP × 0.65"],
+                ["Potential Margin", "= Competitor Price − CP (inc GST)"],
+              ].map(([label, formula]) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between",
+                  padding: "6px 0", borderBottom: "1px solid #1a1a1a", fontSize: 12 }}>
+                  <span style={{ color: "#888" }}>{label}</span>
+                  <span style={{ color: "#fff", fontFamily: "monospace" }}>{formula}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </div>

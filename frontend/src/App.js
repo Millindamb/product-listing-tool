@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API = "http://localhost:5000/api";
+const API = import.meta.env.REACT_APP_API_URL || "https://austpek-backend.onrender.com/api";
 
 // ─── BUSINESS RULES (mirrored from backend for instant UI validation) ─────────
 const MARGIN_RULES_FE = {

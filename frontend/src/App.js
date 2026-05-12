@@ -184,7 +184,7 @@ function PricingPanel({ category, brand, onResult }) {
 
   return (
     <div>
-      <SectionTitle>💰 Pricing Calculator</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-dollar-sign"></i> Pricing Calculator</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         <Field label="Cost Price (CP)" hint="Supplier's price — GST added automatically if not included">
           <Input value={cpRaw} onChange={setCp} placeholder="90.00" type="number" />
@@ -349,13 +349,13 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash",info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B",info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
     <div>
-      <SectionTitle>📝 Description Builder</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-file-pen"></i> Description Builder</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         <Field label="Available in Colours">
           <Input value={colours} onChange={setColours} placeholder="Chrome, Black, Gold" />
@@ -387,7 +387,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>🤖 AI Description (75 words)</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}><i className="fa-solid fa-robot"></i> AI Description (75 words)</div>
 
         {/* Model selector cards */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
@@ -410,7 +410,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             </div>
             <label style={{ display:"inline-block", padding:"7px 14px", borderRadius:8, fontSize:12,
               fontWeight:600, background:"#1a1a1a", border:"1px dashed #444", color:"#aaa", cursor:"pointer" }}>
-              📎 Choose Images (max 2)
+              <i className="fa-solid fa-paperclip"></i> Choose Images (max 2)
               <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display:"none" }} />
             </label>
             {previews.length > 0 && (
@@ -439,7 +439,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         )}
 
         <Btn onClick={generateAI} disabled={aiLoading}>
-          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].label}...` : `Generate with ${MODEL_INFO[aiModel].label}`}
+          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].info}...` : `Generate with ${MODEL_INFO[aiModel].info}`}
         </Btn>
 
         {aiError && (
@@ -469,7 +469,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
           <span style={{ fontSize:12, fontWeight:700, color:"#888" }}>Full Description Preview</span>
           <Btn onClick={copyAll} variant={copied?"success":"ghost"} small>
-            {copied ? "✓ Copied!" : "📋 Copy All"}
+            {copied ? <><i className="fa-solid fa-check"></i> Copied!</> : <><i className="fa-regular fa-copy"></i> Copy All</>}
           </Btn>
         </div>
         <pre style={{ color:"#ccc", fontSize:12, lineHeight:1.7, whiteSpace:"pre-wrap", margin:0, fontFamily:"inherit" }}>
@@ -497,7 +497,7 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
 
   return (
     <div>
-      <SectionTitle>🏷️ Tags & Metafields</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-tags"></i> Tags & Metafields</SectionTitle>
       <Field label="Tags (comma separated — paste into Shopify)">
         <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333", position:"relative" }}>
           <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>{tags.join(", ") || "— fill product details —"}</div>
@@ -570,7 +570,7 @@ function RepriceCalculator() {
 
   return (
     <Card>
-      <SectionTitle>⚡ Competitive Repricing Calculator</SectionTitle>
+      <SectionTitle><i class="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
       <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
         From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
       </div>
@@ -801,9 +801,9 @@ export default function App() {
   };
 
   const NAV = [
-    { key: "form",    label: "➕ Add Product" },
-    { key: "queue",   label: `📋 Queue (${products.length})` },
-    { key: "reprice", label: "⚡ Reprice Tool" },
+    { key: "form",    label: "+ Add Product" },
+    { key: "queue",label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
+    { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
   ];
 
   return (
@@ -813,7 +813,7 @@ export default function App() {
         display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontSize: 18, fontWeight: 900, color: "#c9933a", letterSpacing: 1 }}>AUSTPEK</div>
-          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Product Listing Tool</div>
+          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           {NAV.map(n => (
@@ -891,7 +891,7 @@ export default function App() {
               )}
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                  {saving ? "Saving..." : "💾 Save to Queue"}
+                  {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
                 </Btn>
                 {saveMsg && (
                   <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>

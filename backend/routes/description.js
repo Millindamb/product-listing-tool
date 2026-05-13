@@ -29,10 +29,10 @@ function trimTo75(text) {
 // gemini-2.0-flash is the latest but some accounts may only have gemini-1.5-flash
 // We try 2.0 first then fall back to 1.5 automatically
 const GEMINI_MODELS = [
-  "gemini-2.5-flash",        // Best — latest stable, multimodal
-  "gemini-2.0-flash",        // Good fallback
-  "gemini-2.0-flash-lite",   // Lighter/faster fallback
-  "gemini-2.5-flash-lite",   // Another good option
+  "gemini-2.0-flash",
+  "gemini-2.0-flash-lite",
+  "gemini-1.5-flash",
+  "gemini-1.5-flash-latest",
 ];
 
 async function callGemini(apiKey, parts) {
@@ -44,7 +44,7 @@ async function callGemini(apiKey, parts) {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
       const res = await axios.post(
         url,
-        { contents: [{ role: "user", parts }] },  // ← added role
+        { contents: [{ parts }] },
         {
           headers: { "Content-Type": "application/json" },
           timeout: 30000,
@@ -83,11 +83,8 @@ async function callGemini(apiKey, parts) {
       }
 
       // 429 = rate limit
-      // In callGemini(), change the 429 handler to:
       if (status === 429) {
-        console.warn(`[Gemini] Rate limit on ${modelName}, trying next model...`);
-        lastError = new Error(`Rate limit on ${modelName}`);
-        continue;
+        throw new Error("Gemini rate limit reached — wait a minute and try again");
       }
 
       // Any other error — stop trying
@@ -117,9 +114,7 @@ router.post("/generate", upload.array("images", 2), async (req, res) => {
 
     // ── GEMINI (primary — free, multimodal) ───────────────────────────────────
     if (model === "gemini") {
-      const apiKey = process.env.GEMINI_API_KEY?.trim();  // ← trim whitespace
-      if (!apiKey) { throw new Error("GEMINI_API_KEY not set..."); }
-
+      const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) {
         throw new Error(
           "GEMINI_API_KEY not set in .env — " +
@@ -137,11 +132,7 @@ router.post("/generate", upload.array("images", 2), async (req, res) => {
         : basePrompt;
 
       const parts = [{ text: textPrompt }];
-      images.forEach((img) => {
-        if (img?.buffer?.length > 0) {
-          parts.push(bufferToGeminiPart(img.buffer, img.mimetype));
-        }
-      });
+      images.forEach((img) => parts.push(bufferToGeminiPart(img.buffer, img.mimetype)));
 
       const result = await callGemini(apiKey, parts);
       description = result.text;
@@ -265,3 +256,39 @@ router.get("/test-gemini", async (req, res) => {
 });
 
 module.exports = router;
+
+// ── POST /api/description/fetch-rrp ──────────────────────────────────────────
+// Uses Gemini to extract RRP from a supplier URL or SKU
+// Gemini reads the page content and returns the RRP value
+router.post("/fetch-rrp", async (req, res) => {
+  const { supplierUrl, sku } = req.body;
+  const apiKey = process.env.GEMINI_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not set in .env" });
+
+  const source = supplierUrl || sku;
+  if (!source) return res.status(400).json({ error: "supplierUrl or sku required" });
+
+  try {
+    // Ask Gemini to extract RRP from the supplier page URL
+    const prompt = supplierUrl
+      ? `Visit this product page URL and extract the RRP (Recommended Retail Price) or list price: ${supplierUrl}\n\nRespond ONLY with a JSON object in this exact format:\n{"rrp": 199, "includesGST": true, "currency": "AUD"}\nIf you cannot find a price, respond with: {"rrp": null, "message": "Price not found"}\nDo not include any other text.`
+      : `What is the typical RRP for a bathroom product with SKU "${sku}"? Respond ONLY with JSON: {"rrp": null, "message": "Cannot determine RRP from SKU alone — please enter supplier URL"}`;
+
+    const geminiRes = await axios.post(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+      { contents: [{ parts: [{ text: prompt }] }] },
+      { headers: { "Content-Type": "application/json" }, timeout: 15000 }
+    );
+
+    const raw = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
+    // Strip markdown code fences if present
+    const clean = raw.replace(/```json|```/g, "").trim();
+    const parsed = JSON.parse(clean);
+    res.json(parsed);
+
+  } catch (err) {
+    console.error("[fetch-rrp] Error:", err.message);
+    // Don't fail hard — just tell frontend to enter manually
+    res.json({ rrp: null, message: "Could not auto-fetch — enter RRP manually" });
+  }
+});

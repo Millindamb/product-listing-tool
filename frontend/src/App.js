@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 
-const API = import.meta.env.REACT_APP_API_URL || "https://austpek-backend.onrender.com/api";
+const API = "http://localhost:5000/api";
 
 // ─── BUSINESS RULES (mirrored from backend for instant UI validation) ─────────
 const MARGIN_RULES_FE = {
@@ -157,34 +157,99 @@ const SectionTitle = ({ children }) => (
 );
 
 // ─── PRICING CALCULATOR PANEL ─────────────────────────────────────────────────
-function PricingPanel({ category, brand, onResult }) {
+// Pricing modes from Special Guidelines:
+// 1. CP + Min Margin (default)
+// 2. RRP × 0.85  (15% off RRP)
+// 3. RRP × 0.90  (10% off RRP)
+function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
   const [cpRaw, setCp] = useState("");
   const [cpGST, setCpGST] = useState(false);
   const [rrpRaw, setRrp] = useState("");
   const [rrpGST, setRrpGST] = useState(false);
   const [manualSP, setManualSP] = useState("");
+  const [pricingMode, setPricingMode] = useState("margin"); // "margin" | "rrp85" | "rrp90"
   const [result, setResult] = useState(null);
+  const [fetching, setFetching] = useState(false);
+  const [fetchMsg, setFetchMsg] = useState("");
+
+  // Auto-fetch RRP from supplier URL or SKU using Gemini
+  const fetchRRP = async () => {
+    const source = supplierUrl || sku;
+    if (!source) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
+    setFetching(true); setFetchMsg("");
+    try {
+      const { data } = await axios.post(`${API}/description/fetch-rrp`, { supplierUrl, sku });
+      if (data.rrp) {
+        setRrp(String(data.rrp));
+        setRrpGST(data.includesGST || false);
+        setFetchMsg(`✓ RRP fetched: $${data.rrp} ${data.includesGST ? "(inc GST)" : "(ex GST)"}`);
+      } else {
+        setFetchMsg(data.message || "Could not extract RRP — enter manually");
+      }
+    } catch {
+      setFetchMsg("Fetch failed — enter RRP manually");
+    }
+    setFetching(false);
+  };
 
   const calculate = useCallback(() => {
     if (!cpRaw) return;
     const cp = cpGST ? +cpRaw : +(+cpRaw * 1.1).toFixed(2);
     const rrp = rrpRaw ? (rrpGST ? Math.round(+rrpRaw) : Math.round(+rrpRaw * 1.1)) : null;
-    const { sp, required, ok, hardMin } = calcMargin(category, cp, rrp);
-    const finalSP = manualSP ? Math.round(+manualSP) : sp;
+
+    let finalSP;
+    if (manualSP) {
+      finalSP = Math.round(+manualSP);
+    } else if (pricingMode === "rrp85" && rrp) {
+      // SP = RRP × 0.85 (15% off RRP)
+      finalSP = Math.round(rrp * 0.85);
+    } else if (pricingMode === "rrp90" && rrp) {
+      // SP = RRP × 0.90 (10% off RRP)
+      finalSP = Math.round(rrp * 0.90);
+    } else {
+      // Default: CP + minimum margin
+      const { sp } = calcMargin(category, cp, rrp);
+      finalSP = sp;
+    }
+
+    const { required, hardMin } = calcMargin(category, cp, rrp);
     const finalRRP = rrp || Math.round(finalSP * 1.1);
     const { w, note } = calcWeight(category, finalSP, brand);
     const actualMargin = +(finalSP - cp).toFixed(2);
     const marginOk = hardMin ? finalSP >= required : actualMargin >= required;
-    const r = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note };
+    const r = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note, pricingMode };
     setResult(r);
     onResult?.(r);
-  }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, category, brand, onResult]);
+  }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, category, brand, onResult]);
 
-  useEffect(() => { if (cpRaw) calculate(); }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, calculate]);
+  useEffect(() => { if (cpRaw) calculate(); }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, calculate]);
+
+  const MODES = [
+    { key:"margin", label:"CP + Min Margin", desc:"Default — adds minimum margin to CP" },
+    { key:"rrp85",  label:"RRP × 0.85",      desc:"15% off RRP (Special Guidelines)" },
+    { key:"rrp90",  label:"RRP × 0.90",      desc:"10% off RRP (Special Guidelines)" },
+  ];
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-dollar-sign"></i> Pricing Calculator</SectionTitle>
+      <SectionTitle>💰 Pricing Calculator</SectionTitle>
+
+      {/* Pricing Mode Selector */}
+      <div style={{ marginBottom:14 }}>
+        <div style={{ fontSize:11, color:"#888", marginBottom:6, fontWeight:600 }}>PRICING MODE</div>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
+          {MODES.map(m => (
+            <div key={m.key} onClick={() => setPricingMode(m.key)}
+              style={{ border:`1px solid ${pricingMode===m.key?"#c9933a":"#333"}`,
+                borderRadius:8, padding:"8px 10px", cursor:"pointer",
+                background: pricingMode===m.key ? "#c9933a22" : "#111", transition:"all .15s" }}>
+              <div style={{ fontSize:11, fontWeight:700, color:pricingMode===m.key?"#c9933a":"#888" }}>{m.label}</div>
+              <div style={{ fontSize:9, color:"#555", marginTop:2 }}>{m.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
         <Field label="Cost Price (CP)" hint="Supplier's price — GST added automatically if not included">
           <Input value={cpRaw} onChange={setCp} placeholder="90.00" type="number" />
@@ -193,7 +258,7 @@ function PricingPanel({ category, brand, onResult }) {
             Already includes GST
           </label>
         </Field>
-        <Field label="RRP" hint="From supplier catalogue — add 10% GST if not included">
+        <Field label="RRP" hint="From supplier catalogue — or use Auto-Fetch below">
           <Input value={rrpRaw} onChange={setRrp} placeholder="200.00" type="number" />
           <label style={{ fontSize:11, color:"#888", marginTop:4, display:"flex", alignItems:"center", gap:6, cursor:"pointer" }}>
             <input type="checkbox" checked={rrpGST} onChange={e=>setRrpGST(e.target.checked)} />
@@ -201,12 +266,28 @@ function PricingPanel({ category, brand, onResult }) {
           </label>
         </Field>
       </div>
-      <Field label="Override SP (optional)" hint="Leave blank to auto-calculate from margin rules">
+
+      {/* Auto-fetch RRP */}
+      <div style={{ marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+        <Btn onClick={fetchRRP} disabled={fetching} variant="ghost" small>
+          {fetching ? "Fetching..." : "🔍 Auto-Fetch RRP from Supplier URL / SKU"}
+        </Btn>
+        {fetchMsg && (
+          <span style={{ fontSize:11, color: fetchMsg.startsWith("✓") ? "#16a34a" : "#f59e0b" }}>
+            {fetchMsg}
+          </span>
+        )}
+      </div>
+
+      <Field label="Override SP (optional)" hint="Leave blank to auto-calculate using selected pricing mode">
         <Input value={manualSP} onChange={setManualSP} placeholder="Leave blank for auto" type="number" />
       </Field>
 
       {result && (
         <div style={{ marginTop:12, background:"#0d0d0d", borderRadius:10, padding:16, border:`1px solid ${result.marginOk?"#16a34a44":"#dc262644"}` }}>
+          <div style={{ fontSize:10, color:"#555", textAlign:"center", marginBottom:8 }}>
+            Mode: {MODES.find(m=>m.key===pricingMode)?.label}
+          </div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:12 }}>
             {[
               { label:"CP (inc GST)", val:`$${result.cp}`, color:"#aaa" },
@@ -278,9 +359,18 @@ function DescriptionBuilder({ title, category }) {
   const [features, setFeatures] = useState({});
   const [colours, setColours] = useState("");
   const [sizes, setSizes] = useState("");
-  const [warranty, setWarranty] = useState("");
-  const [domWarranty, setDomWarranty] = useState("");
-  const [comWarranty, setComWarranty] = useState("");
+  // Dynamic warranty rows — matches real product warranty structure e.g.
+  // "15 Year Product or Parts Warranty", "Lifetime Stainless Steel 316 Warranty", "1 Year Labour Warranty"
+  const [warrantyRows, setWarrantyRows] = useState([
+    { label: "Product or Parts Warranty", value: "" },
+    { label: "Labour Warranty", value: "" },
+  ]);
+  const addWarrantyRow = () =>
+    setWarrantyRows(prev => [...prev, { label: "", value: "" }]);
+  const removeWarrantyRow = (i) =>
+    setWarrantyRows(prev => prev.filter((_, idx) => idx !== i));
+  const updateWarrantyRow = (i, field, val) =>
+    setWarrantyRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
   const [aiModel, setAiModel] = useState("gemini");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDesc, setAiDesc] = useState("");
@@ -314,8 +404,7 @@ ${sizes ? `Also Available in Sizes: ${sizes}` : ""}
 ${featureBlock}
 
 **Warranty Information:**
-${domWarranty ? `• Domestic: ${domWarranty} years replacement warranty` : `• ${warranty || "__"} years replacement warranty`}
-${comWarranty ? `• Commercial: ${comWarranty} years replacement warranty` : ""}
+${warrantyRows.filter(r=>r.value).map(r => `• ${r.value} ${r.label}`).join("\n")}
 
 ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
@@ -327,7 +416,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
       formData.append("colours", colours);
       formData.append("material", features.material || "");
       formData.append("compatibility", features.compatible || "");
-      formData.append("warranty", warranty || domWarranty || "");
+      formData.append("warranty", warrantyRows.filter(r=>r.value).map(r=>`${r.value} ${r.label}`).join(", ") || "");
       formData.append("category", category || "");
       formData.append("model", aiModel);
       images.forEach(img => formData.append("images", img));
@@ -349,13 +438,13 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash",info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B",info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash", tag:"Free · Supports images", color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B", tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-file-pen"></i> Description Builder</SectionTitle>
+      <SectionTitle>📝 Description Builder</SectionTitle>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         <Field label="Available in Colours">
           <Input value={colours} onChange={setColours} placeholder="Chrome, Black, Gold" />
@@ -373,21 +462,45 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         ))}
       </div>
 
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:14 }}>
-        <Field label="General Warranty (years)">
-          <Input value={warranty} onChange={setWarranty} placeholder="5" />
-        </Field>
-        <Field label="Domestic Warranty (years)">
-          <Input value={domWarranty} onChange={setDomWarranty} placeholder="5" />
-        </Field>
-        <Field label="Commercial Warranty (years)">
-          <Input value={comWarranty} onChange={setComWarranty} placeholder="2" />
-        </Field>
+      {/* Dynamic Warranty Section */}
+      <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}>🛡 Warranty Information</div>
+          <Btn onClick={addWarrantyRow} variant="ghost" small>+ Add Warranty</Btn>
+        </div>
+        <div style={{ fontSize:11, color:"#555", marginBottom:10 }}>
+          Example: "15 Year Product or Parts Warranty" · "Lifetime Stainless Steel 316 Warranty" · "1 Year Labour Warranty"
+        </div>
+        {warrantyRows.map((row, i) => (
+          <div key={i} style={{ display:"grid", gridTemplateColumns:"110px 1fr 32px", gap:8, marginBottom:8, alignItems:"center" }}>
+            <Input
+              value={row.value}
+              onChange={v => updateWarrantyRow(i, "value", v)}
+              placeholder="e.g. 5 Year / Lifetime"
+            />
+            <Input
+              value={row.label}
+              onChange={v => updateWarrantyRow(i, "label", v)}
+              placeholder="e.g. Product or Parts Warranty"
+            />
+            <button onClick={() => removeWarrantyRow(i)}
+              style={{ background:"#7f1d1d44", border:"1px solid #7f1d1d", borderRadius:6,
+                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}>✕</button>
+          </div>
+        ))}
+        {warrantyRows.length > 0 && (
+          <div style={{ marginTop:10, background:"#111", borderRadius:6, padding:"8px 12px", border:"1px solid #222" }}>
+            <div style={{ fontSize:10, color:"#555", marginBottom:4 }}>Preview</div>
+            {warrantyRows.filter(r=>r.value||r.label).map((r,i) => (
+              <div key={i} style={{ fontSize:12, color:"#ccc" }}>• {r.value} {r.label}</div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}><i className="fa-solid fa-robot"></i> AI Description (75 words)</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>🤖 AI Description (75 words)</div>
 
         {/* Model selector cards */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
@@ -410,7 +523,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             </div>
             <label style={{ display:"inline-block", padding:"7px 14px", borderRadius:8, fontSize:12,
               fontWeight:600, background:"#1a1a1a", border:"1px dashed #444", color:"#aaa", cursor:"pointer" }}>
-              <i className="fa-solid fa-paperclip"></i> Choose Images (max 2)
+              📎 Choose Images (max 2)
               <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display:"none" }} />
             </label>
             {previews.length > 0 && (
@@ -439,7 +552,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         )}
 
         <Btn onClick={generateAI} disabled={aiLoading}>
-          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].info}...` : `Generate with ${MODEL_INFO[aiModel].info}`}
+          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].label}...` : `Generate with ${MODEL_INFO[aiModel].label}`}
         </Btn>
 
         {aiError && (
@@ -469,7 +582,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
           <span style={{ fontSize:12, fontWeight:700, color:"#888" }}>Full Description Preview</span>
           <Btn onClick={copyAll} variant={copied?"success":"ghost"} small>
-            {copied ? <><i className="fa-solid fa-check"></i> Copied!</> : <><i className="fa-regular fa-copy"></i> Copy All</>}
+            {copied ? "✓ Copied!" : "📋 Copy All"}
           </Btn>
         </div>
         <pre style={{ color:"#ccc", fontSize:12, lineHeight:1.7, whiteSpace:"pre-wrap", margin:0, fontFamily:"inherit" }}>
@@ -497,7 +610,7 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
 
   return (
     <div>
-      <SectionTitle><i className="fa-solid fa-tags"></i> Tags & Metafields</SectionTitle>
+      <SectionTitle>🏷️ Tags & Metafields</SectionTitle>
       <Field label="Tags (comma separated — paste into Shopify)">
         <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333", position:"relative" }}>
           <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>{tags.join(", ") || "— fill product details —"}</div>
@@ -570,7 +683,7 @@ function RepriceCalculator() {
 
   return (
     <Card>
-      <SectionTitle><i class="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
+      <SectionTitle>⚡ Competitive Repricing Calculator</SectionTitle>
       <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
         From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
       </div>
@@ -801,9 +914,9 @@ export default function App() {
   };
 
   const NAV = [
-    { key: "form",    label: "+ Add Product" },
-    { key: "queue",label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
-    { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
+    { key: "form",    label: "➕ Add Product" },
+    { key: "queue",   label: `📋 Queue (${products.length})` },
+    { key: "reprice", label: "⚡ Reprice Tool" },
   ];
 
   return (
@@ -813,7 +926,7 @@ export default function App() {
         display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ fontSize: 18, fontWeight: 900, color: "#c9933a", letterSpacing: 1 }}>AUSTPEK</div>
-          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>
+          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Product Listing Tool</div>
         </div>
         <div style={{ display: "flex", gap: 4 }}>
           {NAV.map(n => (
@@ -882,7 +995,7 @@ export default function App() {
                 </Card>
               )}
               <Card>
-                <PricingPanel category={category} brand={brand} onResult={setPricing} />
+                <PricingPanel category={category} brand={brand} supplierUrl={supplierUrl} sku={sku} onResult={setPricing} />
               </Card>
               {category && (
                 <Card>
@@ -891,7 +1004,7 @@ export default function App() {
               )}
               <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                  {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
+                  {saving ? "Saving..." : "💾 Save to Queue"}
                 </Btn>
                 {saveMsg && (
                   <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>

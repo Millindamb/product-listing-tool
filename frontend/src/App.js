@@ -174,15 +174,15 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
 
   // Auto-fetch RRP from supplier URL or SKU using Gemini
   const fetchRRP = async () => {
-    const source = supplierUrl || sku;
-    if (!source) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
-    setFetching(true); setFetchMsg("");
+    if (!supplierUrl && !sku) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
+    setFetching(true); setFetchMsg("Fetching from supplier page...");
     try {
       const { data } = await axios.post(`${API}/description/fetch-rrp`, { supplierUrl, sku });
       if (data.rrp) {
         setRrp(String(data.rrp));
-        setRrpGST(data.includesGST || false);
-        setFetchMsg(`✓ RRP fetched: $${data.rrp} ${data.includesGST ? "(inc GST)" : "(ex GST)"}`);
+        setRrpGST(data.includesGST !== false);
+        const tag = data.source === "estimated" ? " (estimated — verify)" : "";
+        setFetchMsg(`✓ RRP fetched: $${data.rrp} ${data.includesGST ? "(inc GST)" : "(ex GST)"}${tag}`);
       } else {
         setFetchMsg(data.message || "Could not extract RRP — enter manually");
       }
@@ -273,7 +273,13 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
           {fetching ? "Fetching..." : "🔍 Auto-Fetch RRP from Supplier URL / SKU"}
         </Btn>
         {fetchMsg && (
-          <span style={{ fontSize:11, color: fetchMsg.startsWith("✓") ? "#16a34a" : "#f59e0b" }}>
+          <span style={{
+            fontSize:11,
+            color: fetchMsg.startsWith("✓") ? "#16a34a"
+              : fetchMsg.includes("Estimated") ? "#f59e0b"
+              : fetchMsg.includes("blocked") || fetchMsg.includes("manually") ? "#ef4444"
+              : "#f59e0b"
+          }}>
             {fetchMsg}
           </span>
         )}

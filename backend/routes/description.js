@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const axios = require("axios");
+const cheerio = require("cheerio");
 const multer = require("multer");
 const Groq = require("groq-sdk");
 const { buildAIPrompt, getDescriptionFeatures } = require("../data/rules");
@@ -257,40 +258,140 @@ router.get("/test-gemini", async (req, res) => {
   res.json({ results });
 });
 
-module.exports = router;
-
 // ── POST /api/description/fetch-rrp ──────────────────────────────────────────
-// Uses Gemini to extract RRP from a supplier URL or SKU
-// Gemini reads the page content and returns the RRP value
+// Strategy:
+// 1. Try to fetch the supplier page HTML directly
+// 2. If blocked (403) — fallback to Gemini knowledge about brand + SKU
+// 3. Parse whatever we get and return a price or helpful message
 router.post("/fetch-rrp", async (req, res) => {
   const { supplierUrl, sku } = req.body;
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: "GEMINI_API_KEY not set in .env" });
+  if (!supplierUrl && !sku) return res.json({ rrp: null, message: "Enter a Supplier URL or SKU first" });
 
-  const source = supplierUrl || sku;
-  if (!source) return res.status(400).json({ error: "supplierUrl or sku required" });
+  // ── Extract brand name and product name from the URL for Gemini fallback ───
+  let brandHint = "";
+  let productHint = "";
+  if (supplierUrl) {
+    try {
+      const urlObj = new URL(supplierUrl);
+      brandHint = urlObj.hostname.replace("www.", "").split(".")[0];
+      productHint = urlObj.pathname.replace(/\//g, " ").replace(/-/g, " ").trim();
+    } catch {}
+  }
+
+  // ── Strategy 1: Try fetching the actual page ──────────────────────────────
+  let pageContent = null;
+  let fetchBlocked = false;
+
+  if (supplierUrl) {
+    try {
+      console.log(`[fetch-rrp] Attempting page fetch: ${supplierUrl}`);
+      const pageRes = await axios.get(supplierUrl, {
+        timeout: 10000,
+        headers: {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-AU,en;q=0.9",
+          "Cache-Control": "no-cache",
+        },
+        maxRedirects: 5,
+      });
+
+      const $ = cheerio.load(pageRes.data);
+      $("script, style, nav, footer, header, .menu, .cookie, .popup, .cart, .sidebar").remove();
+
+      // Target price-specific elements first
+      const priceSelectors = [
+        ".price", ".product-price", ".regular-price", ".rrp", ".was-price",
+        "[class*='price']", "[class*='rrp']", "[class*='retail']",
+        ".woocommerce-Price-amount", ".amount", "ins", "del",
+        '[itemprop="price"]', '[itemprop="offers"]',
+      ];
+      let priceText = "";
+      priceSelectors.forEach(sel => {
+        $(sel).each((_, el) => { priceText += " " + $(el).text().trim(); });
+      });
+
+      const bodyText = $("body").text().replace(/\s+/g, " ").trim().slice(0, 2500);
+      pageContent = `PRICE ELEMENTS:
+${priceText.slice(0, 500)}
+
+PAGE TEXT:
+${bodyText}`;
+      console.log(`[fetch-rrp] Page fetched OK — ${bodyText.length} chars`);
+
+    } catch (fetchErr) {
+      fetchBlocked = true;
+      console.log(`[fetch-rrp] Page fetch blocked/failed (${fetchErr.response?.status || fetchErr.message}) — using Gemini knowledge fallback`);
+    }
+  }
+
+  // ── Strategy 2: Build Gemini prompt based on what we have ─────────────────
+  let prompt;
+
+  if (pageContent) {
+    // We have real page content — ask Gemini to extract the price
+    prompt = `You are a pricing extraction assistant for an Australian bathroom retailer.
+Extract the RRP (Recommended Retail Price), list price, or standard retail price from this page content.
+Prices are in AUD and typically include GST.
+If multiple prices exist, return the original/highest price (not sale/discounted price).
+SKU: ${sku || "not provided"}
+
+Return ONLY valid JSON, no markdown, no extra text:
+{"rrp": 190, "includesGST": true}
+OR if no price found:
+{"rrp": null, "message": "No price visible on page"}
+
+${pageContent}`;
+  } else {
+    // Page was blocked — use Gemini's knowledge about this brand + SKU
+    prompt = `You are a pricing expert for Australian bathroom products.
+A supplier page could not be accessed directly.
+Based on your knowledge of Australian bathroom product pricing, what is the typical RRP for:
+Brand/Supplier: ${brandHint || "unknown"}
+Product: ${productHint || "unknown"}
+SKU: ${sku || "not provided"}
+URL: ${supplierUrl || "not provided"}
+
+If you know or can reasonably estimate this product's Australian RRP (inc GST), return:
+{"rrp": 190, "includesGST": true, "source": "estimated"}
+
+If you have no reliable knowledge of this specific product's price, return:
+{"rrp": null, "message": "Supplier site blocked access — please check the URL and enter RRP manually"}
+
+Return ONLY valid JSON, no markdown, no extra text.`;
+  }
 
   try {
-    // Ask Gemini to extract RRP from the supplier page URL
-    const prompt = supplierUrl
-      ? `Visit this product page URL and extract the RRP (Recommended Retail Price) or list price: ${supplierUrl}\n\nRespond ONLY with a JSON object in this exact format:\n{"rrp": 199, "includesGST": true, "currency": "AUD"}\nIf you cannot find a price, respond with: {"rrp": null, "message": "Price not found"}\nDo not include any other text.`
-      : `What is the typical RRP for a bathroom product with SKU "${sku}"? Respond ONLY with JSON: {"rrp": null, "message": "Cannot determine RRP from SKU alone — please enter supplier URL"}`;
-
     const geminiRes = await axios.post(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       { contents: [{ parts: [{ text: prompt }] }] },
-      { headers: { "Content-Type": "application/json" }, timeout: 15000 }
+      { headers: { "Content-Type": "application/json" }, timeout: 20000 }
     );
 
     const raw = geminiRes.data?.candidates?.[0]?.content?.parts?.[0]?.text || "{}";
-    // Strip markdown code fences if present
     const clean = raw.replace(/```json|```/g, "").trim();
+    console.log(`[fetch-rrp] Gemini response: ${clean}`);
+
     const parsed = JSON.parse(clean);
+
+    // If it's an estimate, add a note so the user knows to verify
+    if (parsed.source === "estimated" && parsed.rrp) {
+      parsed.message = `Estimated RRP — please verify against supplier catalogue`;
+    }
+
     res.json(parsed);
 
-  } catch (err) {
-    console.error("[fetch-rrp] Error:", err.message);
-    // Don't fail hard — just tell frontend to enter manually
-    res.json({ rrp: null, message: "Could not auto-fetch — enter RRP manually" });
+  } catch (geminiErr) {
+    console.error("[fetch-rrp] Gemini error:", geminiErr.message);
+    res.json({
+      rrp: null,
+      message: fetchBlocked
+        ? "Supplier site blocked access — enter RRP manually from their catalogue"
+        : "Could not extract RRP — enter manually",
+    });
   }
 });
+
+module.exports = router;

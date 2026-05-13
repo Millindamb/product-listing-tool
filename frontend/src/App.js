@@ -222,7 +222,7 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
 
   return (
     <div>
-      <SectionTitle>💰 Pricing Calculator</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-dollar-sign"></i> Pricing Calculator</SectionTitle>
       <div style={{ marginBottom:14 }}>
         <div style={{ fontSize:11, color:"#888", marginBottom:6, fontWeight:600 }}>PRICING MODE</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
@@ -257,7 +257,7 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
 
       <div style={{ marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
         <Btn onClick={fetchRRP} disabled={fetching} variant="ghost" small>
-          {fetching ? "Fetching..." : "🔍 Auto-Fetch RRP from Supplier URL / SKU"}
+          {fetching ? "Fetching..." : <><i class="fa-solid fa-magnifying-glass"></i> Auto-Fetch RRP from Supplier URL / SKU <i class="fa-regular fa-circle-right"></i></>}
         </Btn>
         {fetchMsg && (
           <span style={{
@@ -354,7 +354,7 @@ function TitleBuilder({ category, onChange, sharedBrand, sharedCollection, share
       {(sharedBrand || sharedCollection || sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-          ⚡ Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
+          <i class="fa-solid fa-bolt"></i> Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
         </div>
       )}
 
@@ -491,13 +491,13 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
   return (
     <div>
-      <SectionTitle>📝 Description Builder</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-file-pen"></i> Description Builder</SectionTitle>
 
       {/* Sync indicator */}
       {(sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-          ⚡ Colour and Size pre-filled from Product Details
+          <i class="fa-solid fa-bolt"></i> Colour and Size pre-filled from Product Details
         </div>
       )}
 
@@ -554,7 +554,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
       {/* Dynamic Warranty Section */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}>🛡 Warranty Information</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}><i class="fa-solid fa-shield-halved"></i> Warranty Information</div>
           <Btn onClick={addWarrantyRow} variant="ghost" small>+ Add Warranty</Btn>
         </div>
         <div style={{ fontSize:11, color:"#555", marginBottom:10 }}>
@@ -566,7 +566,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             <Input value={row.label} onChange={v => updateWarrantyRow(i, "label", v)} placeholder="e.g. Product or Parts Warranty" />
             <button onClick={() => removeWarrantyRow(i)}
               style={{ background:"#7f1d1d44", border:"1px solid #7f1d1d", borderRadius:6,
-                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}>✕</button>
+                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}><i class="fa-solid fa-xmark"></i></button>
           </div>
         ))}
         {warrantyRows.some(r=>r.value||r.label) && (
@@ -581,7 +581,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>🤖 AI Description (75 words)</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}><i className="fa-solid fa-robot"></i> AI Description (75 words)</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
           {Object.entries(MODEL_INFO).map(([key, info]) => (
             <div key={key} onClick={() => setAiModel(key)}
@@ -601,7 +601,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             </div>
             <label style={{ display:"inline-block", padding:"7px 14px", borderRadius:8, fontSize:12,
               fontWeight:600, background:"#1a1a1a", border:"1px dashed #444", color:"#aaa", cursor:"pointer" }}>
-              📎 Choose Images (max 2)
+              <i className="fa-solid fa-paperclip"></i> Choose Images (max 2)
               <input type="file" accept="image/*" multiple onChange={handleImages} style={{ display:"none" }} />
             </label>
             {previews.length > 0 && (
@@ -660,7 +660,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
           <span style={{ fontSize:12, fontWeight:700, color:"#888" }}>Full Description Preview</span>
           <Btn onClick={copyAll} variant={copied?"success":"ghost"} small>
-            {copied ? "✓ Copied!" : "📋 Copy All"}
+            {copied ? <><i className="fa-solid fa-check"></i> Copied!</> : <><i className="fa-regular fa-copy"></i> Copy All</>}
           </Btn>
         </div>
         <pre style={{ color:"#ccc", fontSize:12, lineHeight:1.7, whiteSpace:"pre-wrap", margin:0, fontFamily:"inherit" }}>
@@ -688,14 +688,14 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
 
   return (
     <div>
-      <SectionTitle>🏷️ Tags & Metafields</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-tags"></i> Tags & Metafields</SectionTitle>
       <Field label="Tags (comma separated — paste into Shopify)">
         <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333" }}>
           <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>
             {tags.join(", ") || "— fill product details —"}
           </div>
           <Btn onClick={()=>copy(tags.join(", "),"tags")} variant="ghost" small>
-            {copied==="tags" ? "✓ Copied" : "Copy Tags"}
+            {copied==="tags" ? <><i className="fa-solid fa-check"></i> Copied!</> : "Copy Tags"}
           </Btn>
         </div>
       </Field>
@@ -759,7 +759,7 @@ function RepriceCalculator() {
 
   return (
     <Card>
-      <SectionTitle>⚡ Competitive Repricing Calculator</SectionTitle>
+      <SectionTitle><i class="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
       <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
         From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
       </div>
@@ -967,9 +967,9 @@ export default function App() {
   };
 
   const NAV = [
-    { key:"form",    label:"➕ Add Product" },
-    { key:"queue",   label:`📋 Queue (${products.length})` },
-    { key:"reprice", label:"⚡ Reprice Tool" },
+    { key: "form",    label: "+ Add Product" },
+    { key: "queue",label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
+    { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
   ];
 
   return (
@@ -979,7 +979,7 @@ export default function App() {
         display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:18, fontWeight:900, color:"#c9933a", letterSpacing:1 }}>AUSTPEK</div>
-          <div style={{ fontSize:12, color:"#555", marginTop:2 }}>Product Listing Tool</div>
+          <div style={{ fontSize:12, color:"#555", marginTop:2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>
         </div>
         <div style={{ display:"flex", gap:4 }}>
           {NAV.map(n => (
@@ -1009,7 +1009,7 @@ export default function App() {
                 {/* Sync hint banner */}
                 <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a22",
                   borderRadius:6, padding:"5px 10px", marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>
-                  ⚡ Brand, Collection, Colour and Size sync automatically to Title Builder and Description
+                  <i class="fa-solid fa-bolt"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
                 </div>
 
                 <Field label="Supplier URL">
@@ -1097,7 +1097,7 @@ export default function App() {
 
               <div style={{ display:"flex", gap:12, alignItems:"center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                  {saving ? "Saving..." : "💾 Save to Queue"}
+                  {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
                 </Btn>
                 {saveMsg && (
                   <span style={{ fontSize:13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>

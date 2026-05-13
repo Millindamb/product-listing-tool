@@ -257,7 +257,7 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
 
       <div style={{ marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
         <Btn onClick={fetchRRP} disabled={fetching} variant="ghost" small>
-          {fetching ? "Fetching..." : <><i class="fa-solid fa-magnifying-glass"></i> Auto-Fetch RRP from Supplier URL / SKU <i class="fa-regular fa-circle-right"></i></>}
+          {fetching ? "Fetching..." : <><i className="fa-solid fa-magnifying-glass"></i> Auto-Fetch RRP from Supplier URL / SKU <i className="fa-regular fa-circle-right"></i></>}
         </Btn>
         {fetchMsg && (
           <span style={{
@@ -354,7 +354,7 @@ function TitleBuilder({ category, onChange, sharedBrand, sharedCollection, share
       {(sharedBrand || sharedCollection || sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-          <i class="fa-solid fa-bolt"></i> Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
+          <i className="fa-solid fa-bolt"></i> Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
         </div>
       )}
 
@@ -497,7 +497,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
       {(sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-          <i class="fa-solid fa-bolt"></i> Colour and Size pre-filled from Product Details
+          <i className="fa-solid fa-bolt"></i> Colour and Size pre-filled from Product Details
         </div>
       )}
 
@@ -554,7 +554,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
       {/* Dynamic Warranty Section */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}><i class="fa-solid fa-shield-halved"></i> Warranty Information</div>
+          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}><i className="fa-solid fa-shield-halved"></i> Warranty Information</div>
           <Btn onClick={addWarrantyRow} variant="ghost" small>+ Add Warranty</Btn>
         </div>
         <div style={{ fontSize:11, color:"#555", marginBottom:10 }}>
@@ -566,7 +566,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
             <Input value={row.label} onChange={v => updateWarrantyRow(i, "label", v)} placeholder="e.g. Product or Parts Warranty" />
             <button onClick={() => removeWarrantyRow(i)}
               style={{ background:"#7f1d1d44", border:"1px solid #7f1d1d", borderRadius:6,
-                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}><i class="fa-solid fa-xmark"></i></button>
+                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}><i className="fa-solid fa-xmark"></i></button>
           </div>
         ))}
         {warrantyRows.some(r=>r.value||r.label) && (
@@ -759,7 +759,7 @@ function RepriceCalculator() {
 
   return (
     <Card>
-      <SectionTitle><i class="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
       <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
         From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
       </div>
@@ -1009,7 +1009,7 @@ export default function App() {
                 {/* Sync hint banner */}
                 <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a22",
                   borderRadius:6, padding:"5px 10px", marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>
-                  <i class="fa-solid fa-bolt"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
+                  <i className="fa-solid fa-bolt"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
                 </div>
 
                 <Field label="Supplier URL">

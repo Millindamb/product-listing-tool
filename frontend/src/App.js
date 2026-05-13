@@ -3,7 +3,7 @@ import axios from "axios";
 
 const API = import.meta.env.REACT_APP_API_URL || "https://austpek-backend.onrender.com/api";
 
-// ─── BUSINESS RULES (mirrored from backend for instant UI validation) ─────────
+// ─── BUSINESS RULES ───────────────────────────────────────────────────────────
 const MARGIN_RULES_FE = {
   "Tapware": { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
   "Accessories": { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
@@ -156,23 +156,18 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-// ─── PRICING CALCULATOR PANEL ─────────────────────────────────────────────────
-// Pricing modes from Special Guidelines:
-// 1. CP + Min Margin (default)
-// 2. RRP × 0.85  (15% off RRP)
-// 3. RRP × 0.90  (10% off RRP)
+// ─── PRICING CALCULATOR ───────────────────────────────────────────────────────
 function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
   const [cpRaw, setCp] = useState("");
   const [cpGST, setCpGST] = useState(false);
   const [rrpRaw, setRrp] = useState("");
   const [rrpGST, setRrpGST] = useState(false);
   const [manualSP, setManualSP] = useState("");
-  const [pricingMode, setPricingMode] = useState("margin"); // "margin" | "rrp85" | "rrp90"
+  const [pricingMode, setPricingMode] = useState("margin");
   const [result, setResult] = useState(null);
   const [fetching, setFetching] = useState(false);
   const [fetchMsg, setFetchMsg] = useState("");
 
-  // Auto-fetch RRP from supplier URL or SKU using Gemini
   const fetchRRP = async () => {
     if (!supplierUrl && !sku) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
     setFetching(true); setFetchMsg("Fetching from supplier page...");
@@ -196,22 +191,17 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
     if (!cpRaw) return;
     const cp = cpGST ? +cpRaw : +(+cpRaw * 1.1).toFixed(2);
     const rrp = rrpRaw ? (rrpGST ? Math.round(+rrpRaw) : Math.round(+rrpRaw * 1.1)) : null;
-
     let finalSP;
     if (manualSP) {
       finalSP = Math.round(+manualSP);
     } else if (pricingMode === "rrp85" && rrp) {
-      // SP = RRP × 0.85 (15% off RRP)
       finalSP = Math.round(rrp * 0.85);
     } else if (pricingMode === "rrp90" && rrp) {
-      // SP = RRP × 0.90 (10% off RRP)
       finalSP = Math.round(rrp * 0.90);
     } else {
-      // Default: CP + minimum margin
       const { sp } = calcMargin(category, cp, rrp);
       finalSP = sp;
     }
-
     const { required, hardMin } = calcMargin(category, cp, rrp);
     const finalRRP = rrp || Math.round(finalSP * 1.1);
     const { w, note } = calcWeight(category, finalSP, brand);
@@ -233,8 +223,6 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
   return (
     <div>
       <SectionTitle>💰 Pricing Calculator</SectionTitle>
-
-      {/* Pricing Mode Selector */}
       <div style={{ marginBottom:14 }}>
         <div style={{ fontSize:11, color:"#888", marginBottom:6, fontWeight:600 }}>PRICING MODE</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
@@ -267,7 +255,6 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
         </Field>
       </div>
 
-      {/* Auto-fetch RRP */}
       <div style={{ marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
         <Btn onClick={fetchRRP} disabled={fetching} variant="ghost" small>
           {fetching ? "Fetching..." : "🔍 Auto-Fetch RRP from Supplier URL / SKU"}
@@ -276,12 +263,10 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
           <span style={{
             fontSize:11,
             color: fetchMsg.startsWith("✓") ? "#16a34a"
-              : fetchMsg.includes("Estimated") ? "#f59e0b"
-              : fetchMsg.includes("blocked") || fetchMsg.includes("manually") ? "#ef4444"
+              : fetchMsg.includes("estimated") ? "#f59e0b"
+              : fetchMsg.includes("manually") ? "#ef4444"
               : "#f59e0b"
-          }}>
-            {fetchMsg}
-          </span>
+          }}>{fetchMsg}</span>
         )}
       </div>
 
@@ -323,17 +308,40 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
 }
 
 // ─── TITLE BUILDER ────────────────────────────────────────────────────────────
-function TitleBuilder({ category, onChange }) {
+function TitleBuilder({ category, onChange, sharedBrand, sharedCollection, sharedColour, sharedSize }) {
   const format = TITLE_FORMATS_FE[category] || "Brand > Collection > Product Type > Colour";
   const parts = format.split(" > ").map(p => p.replace(/\(.*?\)/g,"").trim()).filter(Boolean);
   const [vals, setVals] = useState({});
 
-  const setVal = (k, v) => {
-    const next = { ...vals, [k]: v };
-    setVals(next);
-    const title = parts.map(p => next[p] || "").filter(Boolean).join(" ").toUpperCase();
-    onChange(title);
+  const SHARED_MAP = {
+    "Brand":      sharedBrand,
+    "Collection": sharedCollection,
+    "Colour":     sharedColour,
+    "Size":       sharedSize,
   };
+
+  // Sync shared fields into local vals whenever they change
+  useEffect(() => {
+    setVals(prev => {
+      const updated = { ...prev };
+      let changed = false;
+      Object.entries(SHARED_MAP).forEach(([key, val]) => {
+        if (parts.includes(key) && val !== undefined && val !== prev[key]) {
+          updated[key] = val;
+          changed = true;
+        }
+      });
+      return changed ? updated : prev;
+    });
+  }, [sharedBrand, sharedCollection, sharedColour, sharedSize, category]);
+
+  // Rebuild title whenever vals change
+  useEffect(() => {
+    const title = parts.map(p => vals[p] || "").filter(Boolean).join(" ").toUpperCase();
+    onChange(title);
+  }, [vals]);
+
+  const setVal = (k, v) => setVals(prev => ({ ...prev, [k]: v }));
 
   return (
     <div>
@@ -341,13 +349,38 @@ function TitleBuilder({ category, onChange }) {
       <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:12, color:"#c9933a", fontFamily:"monospace" }}>
         Format: {format}
       </div>
+
+      {/* Sync indicator banner */}
+      {(sharedBrand || sharedCollection || sharedColour || sharedSize) && (
+        <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
+          borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+          ⚡ Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
+        </div>
+      )}
+
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {parts.map(p => (
           <Field key={p} label={p}>
-            <Input value={vals[p]||""} onChange={v=>setVal(p,v)} placeholder={p} />
+            <div style={{ position:"relative" }}>
+              <Input
+                value={vals[p]||""}
+                onChange={v => setVal(p, v)}
+                placeholder={p}
+                style={SHARED_MAP[p] && vals[p] === SHARED_MAP[p] ? { borderColor:"#c9933a55", paddingRight:52 } : {}}
+              />
+              {SHARED_MAP[p] && vals[p] === SHARED_MAP[p] && (
+                <span style={{
+                  position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+                  fontSize:8, color:"#c9933a", fontWeight:800,
+                  background:"#c9933a22", borderRadius:3, padding:"1px 5px",
+                  pointerEvents:"none", letterSpacing:0.5,
+                }}>AUTO</span>
+              )}
+            </div>
           </Field>
         ))}
       </div>
+
       <div style={{ background:"#1a1a1a", borderRadius:8, padding:12, marginTop:8, border:"1px solid #c9933a44" }}>
         <div style={{ fontSize:11, color:"#888", marginBottom:4 }}>Generated Title</div>
         <div style={{ fontSize:14, fontWeight:700, color:"#fff", wordBreak:"break-word" }}>
@@ -359,24 +392,15 @@ function TitleBuilder({ category, onChange }) {
 }
 
 // ─── DESCRIPTION BUILDER ──────────────────────────────────────────────────────
-// ─── DESCRIPTION BUILDER ──────────────────────────────────────────────────────
-function DescriptionBuilder({ title, category }) {
+function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
   const fields = (DESCRIPTION_FEATURES[category] || DESCRIPTION_FEATURES.default);
   const [features, setFeatures] = useState({});
   const [colours, setColours] = useState("");
   const [sizes, setSizes] = useState("");
-  // Dynamic warranty rows — matches real product warranty structure e.g.
-  // "15 Year Product or Parts Warranty", "Lifetime Stainless Steel 316 Warranty", "1 Year Labour Warranty"
   const [warrantyRows, setWarrantyRows] = useState([
     { label: "Product or Parts Warranty", value: "" },
     { label: "Labour Warranty", value: "" },
   ]);
-  const addWarrantyRow = () =>
-    setWarrantyRows(prev => [...prev, { label: "", value: "" }]);
-  const removeWarrantyRow = (i) =>
-    setWarrantyRows(prev => prev.filter((_, idx) => idx !== i));
-  const updateWarrantyRow = (i, field, val) =>
-    setWarrantyRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
   const [aiModel, setAiModel] = useState("gemini");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDesc, setAiDesc] = useState("");
@@ -386,7 +410,33 @@ function DescriptionBuilder({ title, category }) {
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
 
+  // Sync shared colour into Available Colours (only pre-fills, doesn't override manual input)
+  useEffect(() => {
+    if (sharedColour) setColours(prev => prev || sharedColour);
+  }, [sharedColour]);
+
+  // Sync shared size into Available Sizes
+  useEffect(() => {
+    if (sharedSize) setSizes(prev => prev || sharedSize);
+  }, [sharedSize]);
+
+  // Also sync colour/size into feature fields if they exist for this category
+  useEffect(() => {
+    if (sharedColour) setFeatures(prev => ({ ...prev, colour: prev.colour || sharedColour }));
+  }, [sharedColour]);
+
+  useEffect(() => {
+    if (sharedSize) setFeatures(prev => ({ ...prev, size: prev.size || sharedSize }));
+  }, [sharedSize]);
+
   const setFeature = (k, v) => setFeatures(prev => ({ ...prev, [k]: v }));
+
+  const addWarrantyRow = () =>
+    setWarrantyRows(prev => [...prev, { label: "", value: "" }]);
+  const removeWarrantyRow = (i) =>
+    setWarrantyRows(prev => prev.filter((_, idx) => idx !== i));
+  const updateWarrantyRow = (i, field, val) =>
+    setWarrantyRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
 
   const handleImages = (e) => {
     const files = Array.from(e.target.files).slice(0, 2);
@@ -444,26 +494,68 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash",info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B",info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash", info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B", info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
     <div>
       <SectionTitle>📝 Description Builder</SectionTitle>
+
+      {/* Sync indicator */}
+      {(sharedColour || sharedSize) && (
+        <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
+          borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
+          ⚡ Colour and Size pre-filled from Product Details
+        </div>
+      )}
+
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         <Field label="Available in Colours">
-          <Input value={colours} onChange={setColours} placeholder="Chrome, Black, Gold" />
+          <div style={{ position:"relative" }}>
+            <Input value={colours} onChange={setColours} placeholder="Chrome, Black, Gold"
+              style={sharedColour && colours === sharedColour ? { borderColor:"#c9933a55", paddingRight:52 } : {}} />
+            {sharedColour && colours === sharedColour && (
+              <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+                fontSize:8, color:"#c9933a", fontWeight:800, background:"#c9933a22",
+                borderRadius:3, padding:"1px 5px", pointerEvents:"none" }}>AUTO</span>
+            )}
+          </div>
         </Field>
         <Field label="Available in Sizes (if applicable)">
-          <Input value={sizes} onChange={setSizes} placeholder="600mm, 750mm, 900mm" />
+          <div style={{ position:"relative" }}>
+            <Input value={sizes} onChange={setSizes} placeholder="600mm, 750mm, 900mm"
+              style={sharedSize && sizes === sharedSize ? { borderColor:"#c9933a55", paddingRight:52 } : {}} />
+            {sharedSize && sizes === sharedSize && (
+              <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+                fontSize:8, color:"#c9933a", fontWeight:800, background:"#c9933a22",
+                borderRadius:3, padding:"1px 5px", pointerEvents:"none" }}>AUTO</span>
+            )}
+          </div>
         </Field>
       </div>
 
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         {fields.map(f => (
           <Field key={f} label={FEATURE_LABELS[f] || f}>
-            <Input value={features[f]||""} onChange={v=>setFeature(f,v)} placeholder={FEATURE_LABELS[f] || f} />
+            <div style={{ position:"relative" }}>
+              <Input
+                value={features[f]||""}
+                onChange={v=>setFeature(f,v)}
+                placeholder={FEATURE_LABELS[f] || f}
+                style={
+                  (f === "colour" && sharedColour && features[f] === sharedColour) ||
+                  (f === "size"   && sharedSize   && features[f] === sharedSize)
+                    ? { borderColor:"#c9933a55", paddingRight:52 } : {}
+                }
+              />
+              {((f === "colour" && sharedColour && features[f] === sharedColour) ||
+                (f === "size"   && sharedSize   && features[f] === sharedSize)) && (
+                <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+                  fontSize:8, color:"#c9933a", fontWeight:800, background:"#c9933a22",
+                  borderRadius:3, padding:"1px 5px", pointerEvents:"none" }}>AUTO</span>
+              )}
+            </div>
           </Field>
         ))}
       </div>
@@ -479,22 +571,14 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         </div>
         {warrantyRows.map((row, i) => (
           <div key={i} style={{ display:"grid", gridTemplateColumns:"110px 1fr 32px", gap:8, marginBottom:8, alignItems:"center" }}>
-            <Input
-              value={row.value}
-              onChange={v => updateWarrantyRow(i, "value", v)}
-              placeholder="e.g. 5 Year / Lifetime"
-            />
-            <Input
-              value={row.label}
-              onChange={v => updateWarrantyRow(i, "label", v)}
-              placeholder="e.g. Product or Parts Warranty"
-            />
+            <Input value={row.value} onChange={v => updateWarrantyRow(i, "value", v)} placeholder="e.g. 5 Year" />
+            <Input value={row.label} onChange={v => updateWarrantyRow(i, "label", v)} placeholder="e.g. Product or Parts Warranty" />
             <button onClick={() => removeWarrantyRow(i)}
               style={{ background:"#7f1d1d44", border:"1px solid #7f1d1d", borderRadius:6,
                 color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}>✕</button>
           </div>
         ))}
-        {warrantyRows.length > 0 && (
+        {warrantyRows.some(r=>r.value||r.label) && (
           <div style={{ marginTop:10, background:"#111", borderRadius:6, padding:"8px 12px", border:"1px solid #222" }}>
             <div style={{ fontSize:10, color:"#555", marginBottom:4 }}>Preview</div>
             {warrantyRows.filter(r=>r.value||r.label).map((r,i) => (
@@ -507,8 +591,6 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
         <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>🤖 AI Description (75 words)</div>
-
-        {/* Model selector cards */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
           {Object.entries(MODEL_INFO).map(([key, info]) => (
             <div key={key} onClick={() => setAiModel(key)}
@@ -521,7 +603,6 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
           ))}
         </div>
 
-        {/* Image upload — Gemini only */}
         {aiModel === "gemini" && (
           <div style={{ marginBottom:12 }}>
             <div style={{ fontSize:11, color:"#888", marginBottom:6 }}>
@@ -599,12 +680,12 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   );
 }
 
-// ─── TAGS & METAFIELDS PANEL ──────────────────────────────────────────────────
+// ─── TAGS & METAFIELDS ────────────────────────────────────────────────────────
 function TagsPanel({ category, brand, colour, size, style: pStyle, productType }) {
   const colourTag = colour ? `Colour_${colour}` : "";
-  const brandTag = brand ? `Brand_${brand}` : "";
-  const styleTag = pStyle ? `Style_${pStyle}` : "";
-  const sizeTag = size ? `Size_${size}` : "";
+  const brandTag  = brand  ? `Brand_${brand}`  : "";
+  const styleTag  = pStyle ? `Style_${pStyle}` : "";
+  const sizeTag   = size   ? `Size_${size}`    : "";
 
   const tags = [category, brand, colour, pStyle, productType, colourTag, brandTag, styleTag, sizeTag]
     .filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
@@ -618,10 +699,12 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
     <div>
       <SectionTitle>🏷️ Tags & Metafields</SectionTitle>
       <Field label="Tags (comma separated — paste into Shopify)">
-        <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333", position:"relative" }}>
-          <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>{tags.join(", ") || "— fill product details —"}</div>
+        <div style={{ background:"#0d0d0d", borderRadius:8, padding:10, border:"1px solid #333" }}>
+          <div style={{ fontSize:13, color:"#ccc", wordBreak:"break-all", marginBottom:8 }}>
+            {tags.join(", ") || "— fill product details —"}
+          </div>
           <Btn onClick={()=>copy(tags.join(", "),"tags")} variant="ghost" small>
-            {copied==="tags"?"✓ Copied":"Copy Tags"}
+            {copied==="tags" ? "✓ Copied" : "Copy Tags"}
           </Btn>
         </div>
       </Field>
@@ -639,8 +722,7 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
   );
 }
 
-
-// ─── REPRICE CALCULATOR (Special Guidelines — Competitive Pricing) ────────────
+// ─── REPRICE CALCULATOR ───────────────────────────────────────────────────────
 function RepriceCalculator() {
   const [cp, setCp] = useState("");
   const [rrp, setRrp] = useState("");
@@ -663,13 +745,10 @@ function RepriceCalculator() {
       });
       setResult(data);
     } catch {
-      // Fallback: calculate in browser
       const results = competitors.map((price, i) => {
         const potentialMargin = price - +cp;
         const canReprice = potentialMargin >= +minMargin;
-        const newSP = canReprice
-          ? (rrp ? Math.min(price, +rrp) : price)
-          : Math.round(+cp + +minMargin);
+        const newSP = canReprice ? (rrp ? Math.min(price, +rrp) : price) : Math.round(+cp + +minMargin);
         return {
           competitor: i + 1, competitorPrice: price,
           potentialMargin: +potentialMargin.toFixed(2),
@@ -720,27 +799,21 @@ function RepriceCalculator() {
       {result && (
         <div style={{ marginTop:16 }}>
           {result.results.map(r => (
-            <div key={r.competitor} style={{
-              background:"#0d0d0d", borderRadius:8, padding:14, marginBottom:8,
-              border:`1px solid ${r.canReprice?"#16a34a44":"#ef444433"}`
-            }}>
+            <div key={r.competitor} style={{ background:"#0d0d0d", borderRadius:8, padding:14, marginBottom:8,
+              border:`1px solid ${r.canReprice?"#16a34a44":"#ef444433"}` }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
                 <span style={{ fontWeight:700, color:"#fff" }}>Competitor {r.competitor} — ${r.competitorPrice}</span>
                 <Badge ok={r.canReprice}>{r.canReprice ? "✓ Can Reprice" : "✗ Cannot Match"}</Badge>
               </div>
               <div style={{ fontSize:12, color:"#888" }}>{r.reason}</div>
-              <div style={{ fontSize:13, color:"#c9933a", fontWeight:700, marginTop:4 }}>
-                New SP → ${r.newSP}
-              </div>
+              <div style={{ fontSize:13, color:"#c9933a", fontWeight:700, marginTop:4 }}>New SP → ${r.newSP}</div>
             </div>
           ))}
           <div style={{ background:"#c9933a22", border:"1px solid #c9933a44", borderRadius:8, padding:14, marginTop:8 }}>
             <div style={{ fontSize:12, color:"#c9933a", fontWeight:700, marginBottom:4 }}>Recommended Final SP</div>
             <div style={{ fontSize:28, fontWeight:900, color:"#c9933a" }}>${result.recommendedSP}</div>
             {result.saving > 0 && (
-              <div style={{ fontSize:12, color:"#888", marginTop:4 }}>
-                Price reduction from current: ${result.saving}
-              </div>
+              <div style={{ fontSize:12, color:"#888", marginTop:4 }}>Price reduction from current: ${result.saving}</div>
             )}
             {result.rrp && result.recommendedSP > result.rrp && (
               <div style={{ fontSize:11, color:"#ef4444", marginTop:4 }}>
@@ -754,27 +827,21 @@ function RepriceCalculator() {
   );
 }
 
-// ─── PRODUCT LIST + EXPORT ────────────────────────────────────────────────────
+// ─── PRODUCT LIST ─────────────────────────────────────────────────────────────
 function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
   return (
     <div>
-      {/* Export buttons */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <div style={{ fontSize:16, fontWeight:700 }}>Product Queue ({products.length})</div>
         <div style={{ display:"flex", gap:8 }}>
-          <Btn onClick={onExportCSV} variant="primary" disabled={products.length===0}>
-            ⬇ Shopify Import CSV
-          </Btn>
-          <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}>
-            ⬇ Final Pricing + Competitor (.xlsx)
-          </Btn>
+          <Btn onClick={onExportCSV} variant="primary" disabled={products.length===0}>⬇ Shopify Import CSV</Btn>
+          <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}>⬇ Final Pricing + Competitor (.xlsx)</Btn>
         </div>
       </div>
 
-      {/* Format info */}
       <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:11, color:"#666", border:"1px solid #1a1a1a" }}>
-        <span style={{ color:"#c9933a", fontWeight:700 }}>Shopify Import CSV</span> — exact 7-column format (Title, SKU, Grams, Price, Compare At Price, Supplier URL, Cost) ready to import directly into Shopify &nbsp;·&nbsp;
-        <span style={{ color:"#16a34a", fontWeight:700 }}>Final Pricing .xlsx</span> — 3 sheets: Final Pricing + Competitor Analysis + Pricing Reference (per Special Guidelines)
+        <span style={{ color:"#c9933a", fontWeight:700 }}>Shopify Import CSV</span> — exact 7-column format ready to import directly into Shopify &nbsp;·&nbsp;
+        <span style={{ color:"#16a34a", fontWeight:700 }}>Final Pricing .xlsx</span> — 3 sheets: Final Pricing + Competitor Analysis + Pricing Reference
       </div>
 
       {products.length === 0 && (
@@ -785,32 +852,24 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
 
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {products.map((p, i) => (
-          <div key={p._id || i} style={{
-            background:"#111", border:"1px solid #222", borderRadius:10,
-            padding:"12px 16px", display:"flex", justifyContent:"space-between",
-            alignItems:"center", flexWrap:"wrap", gap:10
-          }}>
+          <div key={p._id || i} style={{ background:"#111", border:"1px solid #222", borderRadius:10,
+            padding:"12px 16px", display:"flex", justifyContent:"space-between", alignItems:"center", flexWrap:"wrap", gap:10 }}>
             <div style={{ flex:1, minWidth:200 }}>
               <div style={{ fontSize:13, fontWeight:700, color:"#fff", marginBottom:2 }}>{p.productTitle || p.sku}</div>
               <div style={{ fontSize:11, color:"#888" }}>{p.category} · {p.brand} · SKU: {p.sku}</div>
             </div>
             <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:10, color:"#555" }}>CP (inc GST)</div>
-                <div style={{ fontSize:13, color:"#aaa" }}>${p.cpGST || "—"}</div>
-              </div>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:10, color:"#555" }}>SP</div>
-                <div style={{ fontSize:16, fontWeight:800, color:"#c9933a" }}>${p.sp || "—"}</div>
-              </div>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:10, color:"#555" }}>RRP</div>
-                <div style={{ fontSize:13, color:"#aaa" }}>${p.rrp || "—"}</div>
-              </div>
-              <div style={{ textAlign:"center" }}>
-                <div style={{ fontSize:10, color:"#555" }}>Weight</div>
-                <div style={{ fontSize:13, color:"#aaa" }}>{p.weight ? `${p.weight}kg` : "—"}</div>
-              </div>
+              {[
+                { label:"CP (inc GST)", val: p.cpGST ? `$${p.cpGST}` : "—" },
+                { label:"SP",           val: p.sp    ? `$${p.sp}`    : "—", gold: true },
+                { label:"RRP",          val: p.rrp   ? `$${p.rrp}`   : "—" },
+                { label:"Weight",       val: p.weight ? `${p.weight}kg` : "—" },
+              ].map(({ label, val, gold }) => (
+                <div key={label} style={{ textAlign:"center" }}>
+                  <div style={{ fontSize:10, color:"#555" }}>{label}</div>
+                  <div style={{ fontSize: gold?16:13, fontWeight: gold?800:400, color: gold?"#c9933a":"#aaa" }}>{val}</div>
+                </div>
+              ))}
               <Badge ok={p.marginOk}>{p.marginOk ? "✓ Margin" : "✗ Margin"}</Badge>
               <Btn onClick={() => onDelete(p._id || i)} variant="danger" small>✕</Btn>
             </div>
@@ -828,21 +887,22 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState("");
 
-  // Form state
-  const [supplierUrl, setSupplierUrl] = useState("");
-  const [sku, setSku] = useState("");
-  const [category, setCategory] = useState("");
-  const [productType, setProductType] = useState("");
-  const [brand, setBrand] = useState("");
-  const [collection, setCollection] = useState("");
-  const [colour, setColour] = useState("");
-  const [size, setSize] = useState("");
-  const [style, setStyle] = useState("");
-  const [generatedTitle, setGeneratedTitle] = useState("");
-  const [pricing, setPricing] = useState(null);
-  const [notes, setNotes] = useState("");
+  // ── Shared fields (synced across all panels) ──────────────────────────────
+  const [sharedBrand,      setSharedBrand]      = useState("");
+  const [sharedCollection, setSharedCollection] = useState("");
+  const [sharedColour,     setSharedColour]     = useState("");
+  const [sharedSize,       setSharedSize]       = useState("");
 
-  // Load products from backend
+  // ── Non-shared form fields ────────────────────────────────────────────────
+  const [supplierUrl,    setSupplierUrl]    = useState("");
+  const [sku,            setSku]            = useState("");
+  const [category,       setCategory]       = useState("");
+  const [productType,    setProductType]    = useState("");
+  const [style,          setStyle]          = useState("");
+  const [generatedTitle, setGeneratedTitle] = useState("");
+  const [pricing,        setPricing]        = useState(null);
+  const [notes,          setNotes]          = useState("");
+
   useEffect(() => {
     axios.get(`${API}/products`).then(r => setProducts(r.data)).catch(() => {});
   }, []);
@@ -852,7 +912,11 @@ export default function App() {
     setSaving(true);
     const payload = {
       supplierUrl, sku, productTitle: generatedTitle, category, productType,
-      brand, collection, colour, size, style,
+      brand:      sharedBrand,
+      collection: sharedCollection,
+      colour:     sharedColour,
+      size:       sharedSize,
+      style,
       cpGST: pricing?.cp, rrp: pricing?.rrp, sp: pricing?.sp,
       weight: pricing?.weight, marginOk: pricing?.marginOk,
       requiredMargin: pricing?.required,
@@ -875,7 +939,6 @@ export default function App() {
     setProducts(prev => prev.filter(p => p._id !== id));
   };
 
-  // Export 1: Shopify Import CSV (exact 7-column format)
   const exportCSV = async () => {
     try {
       const res = await axios.post(`${API}/export/shopify-csv`, { products }, { responseType: "blob" });
@@ -883,80 +946,81 @@ export default function App() {
       const a = document.createElement("a");
       a.href = url; a.download = `Austpek_Shopify_Import_${Date.now()}.csv`; a.click();
     } catch {
-      // Browser fallback matching exact import CSV format
-      const headers = [
-        "Title","Variant SKU","Variant Grams","Variant Price",
-        "Variant Compare At Price",
-        "Supplier URL (product.metafields.custom.supplier_url)",
-        "Cost per item"
-      ];
+      const headers = ["Title","Variant SKU","Variant Grams","Variant Price",
+        "Variant Compare At Price","Supplier URL (product.metafields.custom.supplier_url)","Cost per item"];
       const rows = products.map(p => [
-        p.productTitle || "",
-        p.sku || "",
+        p.productTitle || "", p.sku || "",
         p.weight ? Math.round(+p.weight * 1000) : "",
-        p.sp ? `$${Math.round(p.sp)}.00` : "",
+        p.sp  ? `$${Math.round(p.sp)}.00`  : "",
         p.rrp ? `$${Math.round(p.rrp)}.00` : "",
         p.supplierUrl || "",
         p.cpGST ? `$${Math.round(p.cpGST)}.00` : "",
       ]);
       const csv = [headers, ...rows].map(r => r.join(",")).join("\r\n");
-      const blob = new Blob([csv], { type: "text/csv" });
+      const blob = new Blob([csv], { type:"text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url; a.download = "Austpek_Shopify_Import.csv"; a.click();
     }
   };
 
-  // Export 2: Final Pricing + Competitor Analysis .xlsx
   const exportXlsx = async () => {
     try {
       const res = await axios.post(`${API}/export/xlsx`, { products }, { responseType: "blob" });
       const url = URL.createObjectURL(res.data);
       const a = document.createElement("a");
       a.href = url; a.download = `Austpek_Final_Pricing_${Date.now()}.xlsx`; a.click();
-    } catch (e) {
+    } catch {
       alert("Export failed — make sure backend is running");
     }
   };
 
   const NAV = [
-    { key: "form",    label: "➕ Add Product" },
-    { key: "queue",   label: `📋 Queue (${products.length})` },
-    { key: "reprice", label: "⚡ Reprice Tool" },
+    { key:"form",    label:"➕ Add Product" },
+    { key:"queue",   label:`📋 Queue (${products.length})` },
+    { key:"reprice", label:"⚡ Reprice Tool" },
   ];
 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "system-ui,sans-serif" }}>
+    <div style={{ minHeight:"100vh", background:"#0a0a0a", color:"#fff", fontFamily:"system-ui,sans-serif" }}>
       {/* Header */}
-      <div style={{ background: "#0d0d0d", borderBottom: "1px solid #1a1a1a", padding: "0 24px",
-        display: "flex", alignItems: "center", justifyContent: "space-between", height: 56 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{ fontSize: 18, fontWeight: 900, color: "#c9933a", letterSpacing: 1 }}>AUSTPEK</div>
-          <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}>Product Listing Tool</div>
+      <div style={{ background:"#0d0d0d", borderBottom:"1px solid #1a1a1a", padding:"0 24px",
+        display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:12 }}>
+          <div style={{ fontSize:18, fontWeight:900, color:"#c9933a", letterSpacing:1 }}>AUSTPEK</div>
+          <div style={{ fontSize:12, color:"#555", marginTop:2 }}>Product Listing Tool</div>
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display:"flex", gap:4 }}>
           {NAV.map(n => (
             <button key={n.key} onClick={() => setTab(n.key)}
-              style={{ background: tab === n.key ? "#c9933a22" : "transparent",
-                border: tab === n.key ? "1px solid #c9933a44" : "1px solid transparent",
-                borderRadius: 8, padding: "6px 16px",
-                color: tab === n.key ? "#c9933a" : "#888",
-                fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              style={{ background: tab===n.key?"#c9933a22":"transparent",
+                border: tab===n.key?"1px solid #c9933a44":"1px solid transparent",
+                borderRadius:8, padding:"6px 16px",
+                color: tab===n.key?"#c9933a":"#888",
+                fontSize:13, fontWeight:600, cursor:"pointer" }}>
               {n.label}
             </button>
           ))}
         </div>
       </div>
 
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 16px" }}>
+      <div style={{ maxWidth:1100, margin:"0 auto", padding:"24px 16px" }}>
 
-        {/* ── ADD PRODUCT FORM ── */}
+        {/* ── ADD PRODUCT ── */}
         {tab === "form" && (
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20 }}>
-            {/* LEFT */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:20 }}>
+
+            {/* LEFT COLUMN */}
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <Card>
                 <SectionTitle>📦 Product Details</SectionTitle>
+
+                {/* Sync hint banner */}
+                <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a22",
+                  borderRadius:6, padding:"5px 10px", marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>
+                  ⚡ Brand, Collection, Colour and Size sync automatically to Title Builder and Description
+                </div>
+
                 <Field label="Supplier URL">
                   <Input value={supplierUrl} onChange={setSupplierUrl} placeholder="https://supplier.com/product" />
                 </Field>
@@ -966,18 +1030,21 @@ export default function App() {
                 <Field label="Category *">
                   <Select value={category} onChange={setCategory} options={ALL_CATEGORIES} placeholder="Select category" />
                 </Field>
+
+                {/* Shared fields */}
                 <Field label="Brand">
-                  <Input value={brand} onChange={setBrand} placeholder="e.g. Caroma, TOTO, Riva" />
+                  <Input value={sharedBrand} onChange={setSharedBrand} placeholder="e.g. Caroma, TOTO, Riva" />
                 </Field>
                 <Field label="Collection (Series)">
-                  <Input value={collection} onChange={setCollection} placeholder="e.g. Liano, Urbane" />
+                  <Input value={sharedCollection} onChange={setSharedCollection} placeholder="e.g. Liano, Urbane" />
                 </Field>
                 <Field label="Colour / Finish">
-                  <Input value={colour} onChange={setColour} placeholder="e.g. Chrome, Matte Black" />
+                  <Input value={sharedColour} onChange={setSharedColour} placeholder="e.g. Chrome, Matte Black" />
                 </Field>
                 <Field label="Size">
-                  <Input value={size} onChange={setSize} placeholder="e.g. 600mm, 900mm" />
+                  <Input value={sharedSize} onChange={setSharedSize} placeholder="e.g. 600mm, 900mm" />
                 </Field>
+
                 <Field label="Style">
                   <Select value={style} onChange={setStyle}
                     options={["Contemporary","Traditional","Hamptons","Smart Bathroom","Beach","Coastal"]} />
@@ -986,34 +1053,63 @@ export default function App() {
                   <Input value={notes} onChange={setNotes} placeholder="Any special notes..." />
                 </Field>
               </Card>
+
               {category && (
                 <Card>
-                  <TagsPanel category={category} brand={brand} colour={colour} size={size} style={style} productType={productType} />
+                  <TagsPanel
+                    category={category}
+                    brand={sharedBrand}
+                    colour={sharedColour}
+                    size={sharedSize}
+                    style={style}
+                    productType={productType}
+                  />
                 </Card>
               )}
             </div>
 
-            {/* RIGHT */}
-            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+            {/* RIGHT COLUMN */}
+            <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               {category && (
                 <Card>
-                  <TitleBuilder category={category} onChange={setGeneratedTitle} />
+                  <TitleBuilder
+                    category={category}
+                    onChange={setGeneratedTitle}
+                    sharedBrand={sharedBrand}
+                    sharedCollection={sharedCollection}
+                    sharedColour={sharedColour}
+                    sharedSize={sharedSize}
+                  />
                 </Card>
               )}
+
               <Card>
-                <PricingPanel category={category} brand={brand} supplierUrl={supplierUrl} sku={sku} onResult={setPricing} />
+                <PricingPanel
+                  category={category}
+                  brand={sharedBrand}
+                  supplierUrl={supplierUrl}
+                  sku={sku}
+                  onResult={setPricing}
+                />
               </Card>
+
               {category && (
                 <Card>
-                  <DescriptionBuilder title={generatedTitle} category={category} />
+                  <DescriptionBuilder
+                    title={generatedTitle}
+                    category={category}
+                    sharedColour={sharedColour}
+                    sharedSize={sharedSize}
+                  />
                 </Card>
               )}
-              <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+
+              <div style={{ display:"flex", gap:12, alignItems:"center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
                   {saving ? "Saving..." : "💾 Save to Queue"}
                 </Btn>
                 {saveMsg && (
-                  <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>
+                  <span style={{ fontSize:13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>
                     {saveMsg}
                   </span>
                 )}
@@ -1034,24 +1130,24 @@ export default function App() {
 
         {/* ── REPRICE TOOL ── */}
         {tab === "reprice" && (
-          <div style={{ maxWidth: 700, margin: "0 auto" }}>
+          <div style={{ maxWidth:700, margin:"0 auto" }}>
             <RepriceCalculator />
-            <div style={{ marginTop: 16, background: "#0d0d0d", borderRadius: 10, padding: 16, border: "1px solid #1a1a1a" }}>
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#c9933a", marginBottom: 10 }}>
+            <div style={{ marginTop:16, background:"#0d0d0d", borderRadius:10, padding:16, border:"1px solid #1a1a1a" }}>
+              <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:10 }}>
                 Pricing Formulas (Special Guidelines)
               </div>
               {[
                 ["Sale Price (15% off RRP)", "= RRP × 0.85"],
                 ["Sale Price (10% off RRP)", "= RRP × 0.90"],
-                ["RRP (when not provided)", "= Sale Price × 1.10"],
-                ["Cost Price (inc GST)", "= Cost Price (ex GST) × 1.10"],
-                ["Cost Price (alt)", "= RRP × 0.65"],
-                ["Potential Margin", "= Competitor Price − CP (inc GST)"],
+                ["RRP (when not provided)",  "= Sale Price × 1.10"],
+                ["Cost Price (inc GST)",     "= Cost Price (ex GST) × 1.10"],
+                ["Cost Price (alt)",         "= RRP × 0.65"],
+                ["Potential Margin",         "= Competitor Price − CP (inc GST)"],
               ].map(([label, formula]) => (
-                <div key={label} style={{ display: "flex", justifyContent: "space-between",
-                  padding: "6px 0", borderBottom: "1px solid #1a1a1a", fontSize: 12 }}>
-                  <span style={{ color: "#888" }}>{label}</span>
-                  <span style={{ color: "#fff", fontFamily: "monospace" }}>{formula}</span>
+                <div key={label} style={{ display:"flex", justifyContent:"space-between",
+                  padding:"6px 0", borderBottom:"1px solid #1a1a1a", fontSize:12 }}>
+                  <span style={{ color:"#888" }}>{label}</span>
+                  <span style={{ color:"#fff", fontFamily:"monospace" }}>{formula}</span>
                 </div>
               ))}
             </div>

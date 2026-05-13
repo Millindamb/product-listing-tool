@@ -29,10 +29,10 @@ function trimTo75(text) {
 // gemini-2.0-flash is the latest but some accounts may only have gemini-1.5-flash
 // We try 2.0 first then fall back to 1.5 automatically
 const GEMINI_MODELS = [
-  "gemini-2.0-flash",
-  "gemini-2.0-flash-lite",
-  "gemini-1.5-flash",
-  "gemini-1.5-flash-latest",
+  "gemini-2.5-flash",        // Best — latest stable, multimodal
+  "gemini-2.0-flash",        // Good fallback
+  "gemini-2.0-flash-lite",   // Lighter/faster fallback
+  "gemini-2.5-flash-lite",   // Another good option
 ];
 
 async function callGemini(apiKey, parts) {
@@ -84,7 +84,9 @@ async function callGemini(apiKey, parts) {
 
       // 429 = rate limit
       if (status === 429) {
-        throw new Error("Gemini rate limit reached — wait a minute and try again");
+        console.warn(`[Gemini] Rate limit on ${modelName}, trying next model...`);
+        lastError = new Error(`Rate limit on ${modelName}`);
+        continue;
       }
 
       // Any other error — stop trying

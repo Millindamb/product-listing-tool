@@ -438,8 +438,8 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash",info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B",info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
@@ -552,7 +552,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         )}
 
         <Btn onClick={generateAI} disabled={aiLoading}>
-          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].label}...` : `Generate with ${MODEL_INFO[aiModel].label}`}
+          {aiLoading ? `Generating with ${MODEL_INFO[aiModel].info}...` : `Generate with ${MODEL_INFO[aiModel].info}`}
         </Btn>
 
         {aiError && (

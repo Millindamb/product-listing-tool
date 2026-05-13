@@ -420,15 +420,6 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
     if (sharedSize) setSizes(prev => prev || sharedSize);
   }, [sharedSize]);
 
-  // Also sync colour/size into feature fields if they exist for this category
-  useEffect(() => {
-    if (sharedColour) setFeatures(prev => ({ ...prev, colour: prev.colour || sharedColour }));
-  }, [sharedColour]);
-
-  useEffect(() => {
-    if (sharedSize) setFeatures(prev => ({ ...prev, size: prev.size || sharedSize }));
-  }, [sharedSize]);
-
   const setFeature = (k, v) => setFeatures(prev => ({ ...prev, [k]: v }));
 
   const addWarrantyRow = () =>

@@ -27,15 +27,10 @@ const TITLE_FORMATS = {
 // ── 2. MINIMUM MARGIN RULES ───────────────────────────────────────────────────
 // Returns { margin, note, hardMinPrice }
 const MARGIN_RULES = [
-  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp < 150,
-    margin: 35, note: "If CP+$35 > $150, use $60 margin instead",
-    capAtRRP: true },
-  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp >= 150,
-    margin: 60, note: "CP is over $150", capAtRRP: true },
-  { match: (cat, sp) => cat === "Accessories" && sp > 1500, // Towel Rails SP > $1500
-    margin: 175, capAtRRP: false },
-  { match: (cat, sp) => cat === "Accessories" && sp > 800,  // Grates SP > $800
-    margin: 150, capAtRRP: false },
+  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp < 150,margin: 35, note: "If CP+$35 > $150, use $60 margin instead",capAtRRP: true },
+  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp >= 150,margin: 60, note: "CP is over $150", capAtRRP: true },
+  { match: (cat, sp) => cat === "Accessories" && sp > 1500,margin: 175, capAtRRP: false },
+  { match: (cat, sp) => cat === "Accessories" && sp > 800,margin: 150, capAtRRP: false },
   { match: (cat) => cat === "Toilet Paper Holders",  hardMinPrice: 30, capAtRRP: false },
   { match: (cat) => cat === "Robe Hooks",            hardMinPrice: 20, capAtRRP: false },
   { match: (cat) => ["Heating","Lighting"].includes(cat), margin: 100, capAtRRP: false, note: "Fine to exceed RRP" },
@@ -184,14 +179,14 @@ const CATEGORY_META = {
 
 // ── 6. COLOUR TAG MAPPING ─────────────────────────────────────────────────────
 const COLOUR_TAG_MAP = {
-  Gold: ["Gold","Brushed Gold","Brass","Brushed Brass","Matte Brass","Antique Brass","Aged Gold"],
-  Nickel: ["Brushed Nickel","Satin Nickel"],
-  Silver: ["Silver","Stainless Steel","Brushed Stainless"],
-  Black: ["Black","Matte Black","Gloss Black","Black Onyx"],
-  White: ["White","Matte White","Gloss White","White Onyx","White Travertine"],
-  Chrome: ["Chrome"],
+  Gold:        ["Gold","Brushed Gold","Brass","Brushed Brass","Matte Brass","Antique Brass","Aged Gold"],
+  Nickel:      ["Brushed Nickel","Satin Nickel"],
+  Silver:      ["Silver","Stainless Steel","Brushed Stainless"],
+  Black:       ["Black","Matte Black","Gloss Black","Black Onyx"],
+  White:       ["White","Matte White","Gloss White","White Onyx","White Travertine"],
+  Chrome:      ["Chrome"],
   "Rose Gold": ["Rose Gold","Copper"],
-  Oak: ["Natural Oak","White Oak","Brown Oak"],
+  Oak:         ["Natural Oak","White Oak","Brown Oak"],
   "Gun Metal": ["Gun Metal","Gunmetal"],
 };
 
@@ -236,14 +231,14 @@ const ALL_CATEGORIES = [
 ];
 
 const PRODUCT_TYPES = {
-  Tapware: ["Basin Mixer","Tall Basin Mixer","Sink Mixer","Pull-Out Sink Mixer","Free Standing Bath Mixer","Bath Spouts / Outlets","Wall Mixer","Wall Mixer with Diverter","Wall Top Assembly","Three Piece Set","Wall Basin / Bath Mixer"],
+  Tapware:     ["Basin Mixer","Tall Basin Mixer","Sink Mixer","Pull-Out Sink Mixer","Free Standing Bath Mixer","Bath Spouts / Outlets","Wall Mixer","Wall Mixer with Diverter","Wall Top Assembly","Three Piece Set","Wall Basin / Bath Mixer"],
   Accessories: ["Heated Towel Rails","Non-Heated Towel Rails","Robe Hooks","Toilet Accessories","Soap Dish Holders","Shelves","Basin Wastes","Bathtub Wastes","Basket Wastes","Bottle Traps","Channel Grates","Point Drains","Tile Inserts","Hand Dryers"],
-  Showers: ["Shower on Rails","Hand Held Showers","Shower Systems","Shower Heads","Shower Arms","Shower Heads and Arms","Wall Mixer","Wall Mixer with Diverter","Wall Top Assembly"],
-  Basins: ["Above Counter Basins","Under Counter Basins","Wall Hung Basins","Freestanding Basins"],
-  Vanities: ["Wall Hung Vanities","Floor Standing Vanities","Tall Boys","Vanity Tops","Laundry Tubs","Mirrored Shaving Cabinets","LED Mirrored Shaving Cabinets","Samples"],
-  Mirrors: ["Mirrored Shaving Cabinets","LED Mirrored Shaving Cabinets","LED Mirrors","Non-LED Mirrors","Magnifying Mirrors"],
-  Toilets: ["Back to Wall Toilets","Close Coupled Toilets","Wall Hung Toilets","Wall Faced Toilets","Rimless Toilets","In-Wall Cisterns","Back to Wall Smart Toilets","Wall Hung Smart Toilets","Integrated Smart Toilets"],
-  Tiles: ["Rectangle Tiles","Square Tiles","Herringbone Tiles","Diamond Tiles","Hexagon Tiles","Mosaic Tiles"],
+  Showers:     ["Shower on Rails","Hand Held Showers","Shower Systems","Shower Heads","Shower Arms","Shower Heads and Arms","Wall Mixer","Wall Mixer with Diverter","Wall Top Assembly"],
+  Basins:      ["Above Counter Basins","Under Counter Basins","Wall Hung Basins","Freestanding Basins"],
+  Vanities:    ["Wall Hung Vanities","Floor Standing Vanities","Tall Boys","Vanity Tops","Laundry Tubs","Mirrored Shaving Cabinets","LED Mirrored Shaving Cabinets","Samples"],
+  Mirrors:     ["Mirrored Shaving Cabinets","LED Mirrored Shaving Cabinets","LED Mirrors","Non-LED Mirrors","Magnifying Mirrors"],
+  Toilets:     ["Back to Wall Toilets","Close Coupled Toilets","Wall Hung Toilets","Wall Faced Toilets","Rimless Toilets","In-Wall Cisterns","Back to Wall Smart Toilets","Wall Hung Smart Toilets","Integrated Smart Toilets"],
+  Tiles:       ["Rectangle Tiles","Square Tiles","Herringbone Tiles","Diamond Tiles","Hexagon Tiles","Mosaic Tiles"],
 };
 
 const STYLES = ["Contemporary","Traditional","Hamptons","Smart Bathroom","Beach","Coastal"];

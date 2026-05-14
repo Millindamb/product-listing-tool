@@ -1,9 +1,9 @@
 const express = require("express");
-const router = express.Router();
-const axios = require("axios");
+const router =  express.Router();
+const axios =   require("axios");
 const cheerio = require("cheerio");
-const multer = require("multer");
-const Groq = require("groq-sdk");
+const multer =  require("multer");
+const Groq =    require("groq-sdk");
 const { buildAIPrompt, getDescriptionFeatures } = require("../data/rules");
 
 // ── Multer — store uploaded images in memory ──────────────────────────────────
@@ -290,10 +290,10 @@ router.post("/fetch-rrp", async (req, res) => {
       const pageRes = await axios.get(supplierUrl, {
         timeout: 10000,
         headers: {
-          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept":          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
           "Accept-Language": "en-AU,en;q=0.9",
-          "Cache-Control": "no-cache",
+          "Cache-Control":   "no-cache",
         },
         maxRedirects: 5,
       });
@@ -333,34 +333,34 @@ ${bodyText}`;
   if (pageContent) {
     // We have real page content — ask Gemini to extract the price
     prompt = `You are a pricing extraction assistant for an Australian bathroom retailer.
-Extract the RRP (Recommended Retail Price), list price, or standard retail price from this page content.
-Prices are in AUD and typically include GST.
-If multiple prices exist, return the original/highest price (not sale/discounted price).
-SKU: ${sku || "not provided"}
+    Extract the RRP (Recommended Retail Price), list price, or standard retail price from this page content.
+    Prices are in AUD and typically include GST.
+    If multiple prices exist, return the original/highest price (not sale/discounted price).
+    SKU: ${sku || "not provided"}
 
-Return ONLY valid JSON, no markdown, no extra text:
-{"rrp": 190, "includesGST": true}
-OR if no price found:
-{"rrp": null, "message": "No price visible on page"}
+    Return ONLY valid JSON, no markdown, no extra text:
+    {"rrp": 190, "includesGST": true}
+    OR if no price found:
+    {"rrp": null, "message": "No price visible on page"}
 
-${pageContent}`;
+    ${pageContent}`;
   } else {
     // Page was blocked — use Gemini's knowledge about this brand + SKU
     prompt = `You are a pricing expert for Australian bathroom products.
-A supplier page could not be accessed directly.
-Based on your knowledge of Australian bathroom product pricing, what is the typical RRP for:
-Brand/Supplier: ${brandHint || "unknown"}
-Product: ${productHint || "unknown"}
-SKU: ${sku || "not provided"}
-URL: ${supplierUrl || "not provided"}
+    A supplier page could not be accessed directly.
+    Based on your knowledge of Australian bathroom product pricing, what is the typical RRP for:
+    Brand/Supplier: ${brandHint || "unknown"}
+    Product: ${productHint || "unknown"}
+    SKU: ${sku || "not provided"}
+    URL: ${supplierUrl || "not provided"}
 
-If you know or can reasonably estimate this product's Australian RRP (inc GST), return:
-{"rrp": 190, "includesGST": true, "source": "estimated"}
+    If you know or can reasonably estimate this product's Australian RRP (inc GST), return:
+    {"rrp": 190, "includesGST": true, "source": "estimated"}
 
-If you have no reliable knowledge of this specific product's price, return:
-{"rrp": null, "message": "Supplier site blocked access — please check the URL and enter RRP manually"}
+    If you have no reliable knowledge of this specific product's price, return:
+    {"rrp": null, "message": "Supplier site blocked access — please check the URL and enter RRP manually"}
 
-Return ONLY valid JSON, no markdown, no extra text.`;
+    Return ONLY valid JSON, no markdown, no extra text.`;
   }
 
   try {

@@ -5,20 +5,20 @@ const API = import.meta.env.REACT_APP_API_URL || "https://austpek-backend.onrend
 
 // ─── BUSINESS RULES ───────────────────────────────────────────────────────────
 const MARGIN_RULES_FE = {
-  "Tapware": { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
-  "Accessories": { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
-  "Showers": { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
-  "Basins": { margin: 65 }, "Sinks": { margin: 80 },
-  "Vanities": { margin: 250 }, "Cabinets": { margin: 250 }, "Laundry Cabinets": { margin: 250 },
-  "Toilets": { margin: 175 }, "Toilets Johnson Suisse": { margin: 300 },
-  "Toilets Under $300": { hardMin: 300 },
-  "Shaving Cabinet": { margin: 150 }, "Tiles": { margin: 35 }, "Saunas": { margin: 300 },
-  "Bathtubs": { margin: 300 }, "Spa Bathtubs": { margin: 500 },
-  "Riva Transparent Bathtubs": { margin: 700 },
-  "Shower Screens Wall-to-Wall": { margin: 250 },
+  "Tapware":                           { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
+  "Accessories":                       { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
+  "Showers":                           { margin: 35, overThreshold: 60, threshold: 150, capAtRRP: true },
+  "Basins":                            { margin: 65 }, "Sinks":                   { margin: 80 },
+  "Vanities":                          { margin: 250 }, "Cabinets":               { margin: 250 }, "Laundry Cabinets": { margin: 250 },
+  "Toilets":                           { margin: 175 }, "Toilets Johnson Suisse": { margin: 300 },
+  "Toilets Under $300":                { hardMin: 300 },
+  "Shaving Cabinet":                   { margin: 150 }, "Tiles":                  { margin: 35 }, "Saunas":            { margin: 300 },
+  "Bathtubs":                          { margin: 300 }, "Spa Bathtubs":           { margin: 500 },
+  "Riva Transparent Bathtubs":         { margin: 700 },
+  "Shower Screens Wall-to-Wall":       { margin: 250 },
   "Shower Screens Covey Return Panel": { margin: 125 },
-  "Heating": { margin: 100 }, "Lighting": { margin: 100 },
-  "Toilet Paper Holders": { hardMin: 30 }, "Robe Hooks": { hardMin: 20 },
+  "Heating":                           { margin: 100 }, "Lighting":               { margin: 100 },
+  "Toilet Paper Holders":              { hardMin: 30 }, "Robe Hooks":             { hardMin: 20 },
 };
 
 const WEIGHT_RULES_FE = {
@@ -30,18 +30,18 @@ const WEIGHT_RULES_FE = {
 };
 
 const TITLE_FORMATS_FE = {
-  "Tapware": "Brand > Collection > Product Type > Size (if applicable) > Colour",
-  "Accessories": "Brand > Collection > Product Type > Size (if applicable) > Colour",
-  "Showers": "Brand > Collection > Product Type > Size (if applicable) > Colour",
+  "Tapware":        "Brand > Collection > Product Type > Size (if applicable) > Colour",
+  "Accessories":    "Brand > Collection > Product Type > Size (if applicable) > Colour",
+  "Showers":        "Brand > Collection > Product Type > Size (if applicable) > Colour",
   "Shower Screens": "Brand > Collection > Framing > Type > Colour > Size",
-  "Bathtubs": "Brand > Collection > Type of Bath > Colour > Size",
-  "Vanities": "Brand > Collection > Colour > Size > Bowl Configuration > Vanity Type",
-  "Basins": "Brand > Collection > Basin Type > Colour > Size",
-  "Mirrors": "Brand > Collection > Shape > Mirror Type > Colour > Size",
-  "Toilets": "Brand > Collection > Type > Colour",
-  "Tiles": "Brand > Collection > Colour > Finish > Size > Shape (PER BOX)",
-  "Heating": "Brand > Collection > Type of Heating > Colour > Size",
-  "Lighting": "Brand > Collection > Type of Lighting > Colour > Size",
+  "Bathtubs":       "Brand > Collection > Type of Bath > Colour > Size",
+  "Vanities":       "Brand > Collection > Colour > Size > Bowl Configuration > Vanity Type",
+  "Basins":         "Brand > Collection > Basin Type > Colour > Size",
+  "Mirrors":        "Brand > Collection > Shape > Mirror Type > Colour > Size",
+  "Toilets":        "Brand > Collection > Type > Colour",
+  "Tiles":          "Brand > Collection > Colour > Finish > Size > Shape (PER BOX)",
+  "Heating":        "Brand > Collection > Type of Heating > Colour > Size",
+  "Lighting":       "Brand > Collection > Type of Lighting > Colour > Size",
 };
 
 const ALL_CATEGORIES = [
@@ -55,14 +55,14 @@ const ALL_CATEGORIES = [
 
 const DESCRIPTION_FEATURES = {
   Accessories: ["colour","size","shape","material","type","wels","flowRate","welsReg","ipRating","voltage","additional"],
-  Tapware: ["colour","size","material","type","wels","flowRate","welsReg","additional"],
-  Basins: ["colour","size","material","mounting","compatible","additional"],
-  Vanities: ["colour","size","material","mounting","bowl","drawer","mechanism","handles","additional"],
-  Showers: ["colour","size","material","type","wels","flowRate","additional"],
-  Mirrors: ["colour","size","shape","type","ipRating","voltage","additional"],
-  Toilets: ["colour","size","type","flushing","waterRating","additional"],
-  Tiles: ["colour","size","finish","shape","coverage","additional"],
-  default: ["colour","size","material","type","additional"],
+  Tapware:     ["colour","size","material","type","wels","flowRate","welsReg","additional"],
+  Basins:      ["colour","size","material","mounting","compatible","additional"],
+  Vanities:    ["colour","size","material","mounting","bowl","drawer","mechanism","handles","additional"],
+  Showers:     ["colour","size","material","type","wels","flowRate","additional"],
+  Mirrors:     ["colour","size","shape","type","ipRating","voltage","additional"],
+  Toilets:     ["colour","size","type","flushing","waterRating","additional"],
+  Tiles:       ["colour","size","finish","shape","coverage","additional"],
+  default:     ["colour","size","material","type","additional"],
 };
 
 const FEATURE_LABELS = {
@@ -158,15 +158,15 @@ const SectionTitle = ({ children }) => (
 
 // ─── PRICING CALCULATOR ───────────────────────────────────────────────────────
 function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
-  const [cpRaw, setCp] = useState("");
-  const [cpGST, setCpGST] = useState(false);
-  const [rrpRaw, setRrp] = useState("");
-  const [rrpGST, setRrpGST] = useState(false);
-  const [manualSP, setManualSP] = useState("");
+  const [cpRaw, setCp]                = useState("");
+  const [cpGST, setCpGST]             = useState(false);
+  const [rrpRaw, setRrp]              = useState("");
+  const [rrpGST, setRrpGST]           = useState(false);
+  const [manualSP, setManualSP]       = useState("");
   const [pricingMode, setPricingMode] = useState("margin");
-  const [result, setResult] = useState(null);
-  const [fetching, setFetching] = useState(false);
-  const [fetchMsg, setFetchMsg] = useState("");
+  const [result, setResult]           = useState(null);
+  const [fetching, setFetching]       = useState(false);
+  const [fetchMsg, setFetchMsg]       = useState("");
 
   const fetchRRP = async () => {
     if (!supplierUrl && !sku) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
@@ -203,11 +203,11 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
       finalSP = sp;
     }
     const { required, hardMin } = calcMargin(category, cp, rrp);
-    const finalRRP = rrp || Math.round(finalSP * 1.1);
-    const { w, note } = calcWeight(category, finalSP, brand);
-    const actualMargin = +(finalSP - cp).toFixed(2);
-    const marginOk = hardMin ? finalSP >= required : actualMargin >= required;
-    const r = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note, pricingMode };
+    const finalRRP              = rrp || Math.round(finalSP * 1.1);
+    const { w, note }           = calcWeight(category, finalSP, brand);
+    const actualMargin          = +(finalSP - cp).toFixed(2);
+    const marginOk              = hardMin ? finalSP >= required : actualMargin >= required;
+    const r                     = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note, pricingMode };
     setResult(r);
     onResult?.(r);
   }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, category, brand, onResult]);
@@ -263,9 +263,9 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
           <span style={{
             fontSize:11,
             color: fetchMsg.startsWith("✓") ? "#16a34a"
-              : fetchMsg.includes("estimated") ? "#f59e0b"
-              : fetchMsg.includes("manually") ? "#ef4444"
-              : "#f59e0b"
+                 : fetchMsg.includes("estimated") ? "#f59e0b"
+                 : fetchMsg.includes("manually") ? "#ef4444"
+                 : "#f59e0b"
           }}>{fetchMsg}</span>
         )}
       </div>
@@ -401,14 +401,14 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
     { label: "Product or Parts Warranty", value: "" },
     { label: "Labour Warranty", value: "" },
   ]);
-  const [aiModel, setAiModel] = useState("gemini");
+  const [aiModel, setAiModel]     = useState("gemini");
   const [aiLoading, setAiLoading] = useState(false);
-  const [aiDesc, setAiDesc] = useState("");
-  const [aiError, setAiError] = useState("");
-  const [aiNote, setAiNote] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [images, setImages] = useState([]);
-  const [previews, setPreviews] = useState([]);
+  const [aiDesc, setAiDesc]       = useState("");
+  const [aiError, setAiError]     = useState("");
+  const [aiNote, setAiNote]       = useState("");
+  const [copied, setCopied]       = useState(false);
+  const [images, setImages]       = useState([]);
+  const [previews, setPreviews]   = useState([]);
 
   // Sync shared colour into Available Colours (only pre-fills, doesn't override manual input)
   useEffect(() => {
@@ -436,7 +436,7 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
   };
 
   const removeImage = (i) => {
-    setImages(prev => prev.filter((_,idx)=>idx!==i));
+    setImages(prev   => prev.filter((_,idx)=>idx!==i));
     setPreviews(prev => prev.filter((_,idx)=>idx!==i));
   };
 
@@ -459,14 +459,14 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
     setAiLoading(true); setAiError(""); setAiNote("");
     try {
       const formData = new FormData();
-      formData.append("name", title || "");
-      formData.append("colours", colours);
-      formData.append("material", features.material || "");
+      formData.append("name",          title || "");
+      formData.append("colours",       colours);
+      formData.append("material",      features.material || "");
       formData.append("compatibility", features.compatible || "");
-      formData.append("warranty", warrantyRows.filter(r=>r.value).map(r=>`${r.value} ${r.label}`).join(", ") || "");
-      formData.append("category", category || "");
-      formData.append("model", aiModel);
-      images.forEach(img => formData.append("images", img));
+      formData.append("warranty",      warrantyRows.filter(r=>r.value).map(r=>`${r.value} ${r.label}`).join(", ") || "");
+      formData.append("category",      category || "");
+      formData.append("model",         aiModel);
+      images.forEach(img =>            formData.append("images", img));
 
       const { data } = await axios.post(`${API}/description/generate`, formData, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -485,8 +485,8 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   };
 
   const MODEL_INFO = {
-    gemini: { label:"Gemini 2.0 Flash", info:"Gemini", tag:"Free · Supports images", color:"#4285f4" },
-    groq:   { label:"Groq Llama 3.3 70B", info:"Groq", tag:"Free · Text only · Very fast", color:"#f55036" },
+    gemini: { label:"Gemini 2.0 Flash",   info:"Gemini", tag:"Free · Supports images",       color:"#4285f4" },
+    groq:   { label:"Groq Llama 3.3 70B", info:"Groq",   tag:"Free · Text only · Very fast", color:"#f55036" },
   };
 
   return (
@@ -674,9 +674,9 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 // ─── TAGS & METAFIELDS ────────────────────────────────────────────────────────
 function TagsPanel({ category, brand, colour, size, style: pStyle, productType }) {
   const colourTag = colour ? `Colour_${colour}` : "";
-  const brandTag  = brand  ? `Brand_${brand}`  : "";
-  const styleTag  = pStyle ? `Style_${pStyle}` : "";
-  const sizeTag   = size   ? `Size_${size}`    : "";
+  const brandTag  = brand  ? `Brand_${brand}`   : "";
+  const styleTag  = pStyle ? `Style_${pStyle}`  : "";
+  const sizeTag   = size   ? `Size_${size}`     : "";
 
   const tags = [category, brand, colour, pStyle, productType, colourTag, brandTag, styleTag, sizeTag]
     .filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
@@ -715,14 +715,14 @@ function TagsPanel({ category, brand, colour, size, style: pStyle, productType }
 
 // ─── REPRICE CALCULATOR ───────────────────────────────────────────────────────
 function RepriceCalculator() {
-  const [cp, setCp] = useState("");
-  const [rrp, setRrp] = useState("");
+  const [cp, setCp]               = useState("");
+  const [rrp, setRrp]             = useState("");
   const [currentSP, setCurrentSP] = useState("");
   const [minMargin, setMinMargin] = useState("");
-  const [c1, setC1] = useState("");
-  const [c2, setC2] = useState("");
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [c1, setC1]               = useState("");
+  const [c2, setC2]               = useState("");
+  const [result, setResult]       = useState(null);
+  const [loading, setLoading]     = useState(false);
 
   const calculate = async () => {
     if (!cp || !minMargin) return;
@@ -851,9 +851,9 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
             </div>
             <div style={{ display:"flex", gap:16, alignItems:"center", flexWrap:"wrap" }}>
               {[
-                { label:"CP (inc GST)", val: p.cpGST ? `$${p.cpGST}` : "—" },
-                { label:"SP",           val: p.sp    ? `$${p.sp}`    : "—", gold: true },
-                { label:"RRP",          val: p.rrp   ? `$${p.rrp}`   : "—" },
+                { label:"CP (inc GST)", val: p.cpGST  ? `$${p.cpGST}`   : "—" },
+                { label:"SP",           val: p.sp     ? `$${p.sp}`      : "—", gold: true },
+                { label:"RRP",          val: p.rrp    ? `$${p.rrp}`     : "—" },
                 { label:"Weight",       val: p.weight ? `${p.weight}kg` : "—" },
               ].map(({ label, val, gold }) => (
                 <div key={label} style={{ textAlign:"center" }}>
@@ -873,10 +873,10 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab, setTab] = useState("form");
+  const [tab,      setTab]      = useState("form");
   const [products, setProducts] = useState([]);
-  const [saving, setSaving] = useState(false);
-  const [saveMsg, setSaveMsg] = useState("");
+  const [saving,   setSaving]   = useState(false);
+  const [saveMsg,  setSaveMsg]  = useState("");
 
   // ── Shared fields (synced across all panels) ──────────────────────────────
   const [sharedBrand,      setSharedBrand]      = useState("");
@@ -938,7 +938,7 @@ export default function App() {
       a.href = url; a.download = `Austpek_Shopify_Import_${Date.now()}.csv`; a.click();
     } catch {
       const headers = ["Title","Variant SKU","Variant Grams","Variant Price",
-        "Variant Compare At Price","Supplier URL (product.metafields.custom.supplier_url)","Cost per item"];
+                       "Variant Compare At Price","Supplier URL (product.metafields.custom.supplier_url)","Cost per item"];
       const rows = products.map(p => [
         p.productTitle || "", p.sku || "",
         p.weight ? Math.round(+p.weight * 1000) : "",
@@ -968,7 +968,7 @@ export default function App() {
 
   const NAV = [
     { key: "form",    label: "+ Add Product" },
-    { key: "queue",label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
+    { key: "queue",   label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
     { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
   ];
 

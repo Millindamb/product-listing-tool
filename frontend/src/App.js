@@ -12,7 +12,7 @@ const MARGIN_RULES_FE = {
   "Vanities":                          { margin: 250 }, "Cabinets":               { margin: 250 }, "Laundry Cabinets": { margin: 250 },
   "Toilets":                           { margin: 175 }, "Toilets Johnson Suisse": { margin: 300 },
   "Toilets Under $300":                { hardMin: 300 },
-  "Shaving Cabinet":                   { margin: 150 }, "Tiles":                  { margin: 35 }, "Saunas":            { margin: 300 },
+  "Shaving Cabinet":                   { margin: 150 }, "Tiles":                  { margin: 35 }, "Saunas": { margin: 300 },
   "Bathtubs":                          { margin: 300 }, "Spa Bathtubs":           { margin: 500 },
   "Riva Transparent Bathtubs":         { margin: 700 },
   "Shower Screens Wall-to-Wall":       { margin: 250 },
@@ -75,6 +75,14 @@ const FEATURE_LABELS = {
   finish:"Finish", coverage:"Coverage (per box/pack)",
 };
 
+// ─── CHANGE 4 — Product attribute preset tags ────────────────────────────────
+const PRODUCT_SPEC_TAGS = [
+  "Gooseneck", "Lead Free", "Watermark Approved", "WELS Approved",
+  "Wall Mounted", "Floor Mounted", "Freestanding", "Back to Wall",
+  "Rimless", "Dual Flush", "Single Lever", "Double Handle",
+  "Thermostatic", "Brushed", "Matte", "Polished",
+];
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 function calcWeight(cat, sp, brand) {
   if (["TOTO","Lafeme"].includes(brand)) return { w: 1, note: "TOTO/Lafeme = 1kg" };
@@ -97,7 +105,7 @@ function calcMargin(cat, cp, rrp) {
   return { sp, required: margin, ok: sp - cp >= margin };
 }
 
-// ─── COMPONENTS ───────────────────────────────────────────────────────────────
+// ─── BASE COMPONENTS ──────────────────────────────────────────────────────────
 const Badge = ({ ok, children }) => (
   <span style={{
     display:"inline-block", padding:"2px 10px", borderRadius:12, fontSize:12, fontWeight:700,
@@ -156,17 +164,19 @@ const SectionTitle = ({ children }) => (
   </div>
 );
 
-// ─── PRICING CALCULATOR ───────────────────────────────────────────────────────
+// ─── CHANGE 1 — PRICING CALCULATOR with custom CP/SP multipliers ──────────────
 function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
-  const [cpRaw, setCp]                = useState("");
-  const [cpGST, setCpGST]             = useState(false);
-  const [rrpRaw, setRrp]              = useState("");
-  const [rrpGST, setRrpGST]           = useState(false);
-  const [manualSP, setManualSP]       = useState("");
-  const [pricingMode, setPricingMode] = useState("margin");
-  const [result, setResult]           = useState(null);
-  const [fetching, setFetching]       = useState(false);
-  const [fetchMsg, setFetchMsg]       = useState("");
+  const [cpRaw, setCp]                  = useState("");
+  const [cpGST, setCpGST]               = useState(false);
+  const [rrpRaw, setRrp]                = useState("");
+  const [rrpGST, setRrpGST]             = useState(false);
+  const [manualSP, setManualSP]         = useState("");
+  const [pricingMode, setPricingMode]   = useState("margin");
+  const [cpMultiplier, setCpMultiplier] = useState("");   // CP = RRP × this
+  const [spMultiplier, setSpMultiplier] = useState("");   // SP = RRP × this
+  const [result, setResult]             = useState(null);
+  const [fetching, setFetching]         = useState(false);
+  const [fetchMsg, setFetchMsg]         = useState("");
 
   const fetchRRP = async () => {
     if (!supplierUrl && !sku) { setFetchMsg("Enter Supplier URL or SKU first"); return; }
@@ -181,16 +191,27 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
       } else {
         setFetchMsg(data.message || "Could not extract RRP — enter manually");
       }
-    } catch {
-      setFetchMsg("Fetch failed — enter RRP manually");
-    }
+    } catch { setFetchMsg("Fetch failed — enter RRP manually"); }
     setFetching(false);
   };
 
+  // Helper: get RRP as number (inc GST)
+  const getRRP = () => rrpRaw ? (rrpGST ? Math.round(+rrpRaw) : Math.round(+rrpRaw * 1.1)) : null;
+
   const calculate = useCallback(() => {
-    if (!cpRaw) return;
-    const cp = cpGST ? +cpRaw : +(+cpRaw * 1.1).toFixed(2);
-    const rrp = rrpRaw ? (rrpGST ? Math.round(+rrpRaw) : Math.round(+rrpRaw * 1.1)) : null;
+    const rrp = getRRP();
+
+    // Determine CP
+    let cp;
+    if (pricingMode === "cpMultiplier") {
+      if (!rrp || !cpMultiplier) return;
+      cp = +( rrp * +cpMultiplier ).toFixed(2);
+    } else {
+      if (!cpRaw) return;
+      cp = cpGST ? +cpRaw : +(+cpRaw * 1.1).toFixed(2);
+    }
+
+    // Determine SP
     let finalSP;
     if (manualSP) {
       finalSP = Math.round(+manualSP);
@@ -198,31 +219,48 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
       finalSP = Math.round(rrp * 0.85);
     } else if (pricingMode === "rrp90" && rrp) {
       finalSP = Math.round(rrp * 0.90);
+    } else if (pricingMode === "spMultiplier" && rrp && spMultiplier) {
+      finalSP = Math.round(rrp * +spMultiplier);
+    } else if (pricingMode === "cpMultiplier") {
+      // CP mode: SP uses sp multiplier if given, else falls back to margin calc
+      finalSP = (rrp && spMultiplier) ? Math.round(rrp * +spMultiplier) : calcMargin(category, cp, rrp).sp;
     } else {
-      const { sp } = calcMargin(category, cp, rrp);
-      finalSP = sp;
+      finalSP = calcMargin(category, cp, rrp).sp;
     }
+
     const { required, hardMin } = calcMargin(category, cp, rrp);
-    const finalRRP              = rrp || Math.round(finalSP * 1.1);
-    const { w, note }           = calcWeight(category, finalSP, brand);
-    const actualMargin          = +(finalSP - cp).toFixed(2);
-    const marginOk              = hardMin ? finalSP >= required : actualMargin >= required;
-    const r                     = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note, pricingMode };
+    const finalRRP               = rrp || Math.round(finalSP * 1.1);
+    const { w, note }            = calcWeight(category, finalSP, brand);
+    const actualMargin           = +(finalSP - cp).toFixed(2);
+    const marginOk               = hardMin ? finalSP >= required : actualMargin >= required;
+    const r                      = { cp, rrp: finalRRP, sp: finalSP, actualMargin, required, marginOk, weight: w, weightNote: note, pricingMode };
     setResult(r);
     onResult?.(r);
-  }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, category, brand, onResult]);
+  }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, cpMultiplier, spMultiplier, category, brand, onResult]);
 
-  useEffect(() => { if (cpRaw) calculate(); }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, calculate]);
+  useEffect(() => {
+    const canCalc =
+      (pricingMode === "cpMultiplier" && rrpRaw && cpMultiplier) ||
+      (pricingMode === "spMultiplier" && rrpRaw && spMultiplier) ||
+      (["margin","rrp85","rrp90"].includes(pricingMode) && cpRaw);
+    if (canCalc) calculate();
+  }, [cpRaw, cpGST, rrpRaw, rrpGST, manualSP, pricingMode, cpMultiplier, spMultiplier, calculate]);
 
   const MODES = [
-    { key:"margin", label:"CP + Min Margin", desc:"Default — adds minimum margin to CP" },
-    { key:"rrp85",  label:"RRP × 0.85",      desc:"15% off RRP (Special Guidelines)" },
-    { key:"rrp90",  label:"RRP × 0.90",      desc:"10% off RRP (Special Guidelines)" },
+    { key:"margin",       label:"CP + Min Margin", desc:"Default — adds minimum margin to CP" },
+    { key:"rrp85",        label:"RRP × 0.85",       desc:"15% off RRP" },
+    { key:"rrp90",        label:"RRP × 0.90",       desc:"10% off RRP" },
+    { key:"cpMultiplier", label:"CP = RRP × ?",     desc:"Custom CP from RRP multiplier" },
+    { key:"spMultiplier", label:"SP = RRP × ?",     desc:"Custom SP from RRP multiplier" },
   ];
+
+  const rrpNum = getRRP();
 
   return (
     <div>
       <SectionTitle><i className="fa-solid fa-dollar-sign"></i> Pricing Calculator</SectionTitle>
+
+      {/* Mode selector */}
       <div style={{ marginBottom:14 }}>
         <div style={{ fontSize:11, color:"#888", marginBottom:6, fontWeight:600 }}>PRICING MODE</div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
@@ -238,13 +276,66 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
         </div>
       </div>
 
+      {/* Custom multiplier inputs */}
+      {(pricingMode === "cpMultiplier" || pricingMode === "spMultiplier") && (
+        <div style={{ background:"#0d0d0d", borderRadius:8, padding:12, marginBottom:12, border:"1px solid #c9933a33" }}>
+          <div style={{ fontSize:11, color:"#c9933a", fontWeight:700, marginBottom:8 }}>
+            <i className="fa-solid fa-pen-to-square"></i> Custom Multiplier — RRP must be entered below
+          </div>
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
+            {pricingMode === "cpMultiplier" && (
+              <Field label="CP Multiplier" hint="CP = RRP × this number">
+                <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                  <span style={{ color:"#888", fontSize:12, whiteSpace:"nowrap" }}>RRP ×</span>
+                  <Input value={cpMultiplier} onChange={setCpMultiplier} placeholder="e.g. 0.65" type="number" style={{ flex:1 }} />
+                </div>
+                {rrpNum && cpMultiplier && (
+                  <div style={{ fontSize:11, color:"#c9933a", marginTop:4 }}>
+                    = ${(rrpNum * +cpMultiplier).toFixed(2)} CP (inc GST)
+                  </div>
+                )}
+              </Field>
+            )}
+            <Field
+              label={pricingMode === "cpMultiplier" ? "SP Multiplier (optional)" : "SP Multiplier"}
+              hint="SP = RRP × this number"
+            >
+              <div style={{ display:"flex", alignItems:"center", gap:6 }}>
+                <span style={{ color:"#888", fontSize:12, whiteSpace:"nowrap" }}>RRP ×</span>
+                <Input value={spMultiplier} onChange={setSpMultiplier} placeholder="e.g. 0.85" type="number" style={{ flex:1 }} />
+              </div>
+              {rrpNum && spMultiplier && (
+                <div style={{ fontSize:11, color:"#c9933a", marginTop:4 }}>
+                  = ${Math.round(rrpNum * +spMultiplier)} SP
+                </div>
+              )}
+            </Field>
+          </div>
+        </div>
+      )}
+
+      {/* CP / RRP inputs */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:12 }}>
-        <Field label="Cost Price (CP)" hint="Supplier's price — GST added automatically if not included">
-          <Input value={cpRaw} onChange={setCp} placeholder="90.00" type="number" />
-          <label style={{ fontSize:11, color:"#888", marginTop:4, display:"flex", alignItems:"center", gap:6, cursor:"pointer" }}>
-            <input type="checkbox" checked={cpGST} onChange={e=>setCpGST(e.target.checked)} />
-            Already includes GST
-          </label>
+        <Field
+          label="Cost Price (CP)"
+          hint={pricingMode === "cpMultiplier" ? "Auto-calculated from RRP × multiplier" : "Supplier's price — GST added if not included"}
+        >
+          {pricingMode === "cpMultiplier" ? (
+            <Input
+              value={rrpNum && cpMultiplier ? (rrpNum * +cpMultiplier).toFixed(2) : ""}
+              onChange={() => {}}
+              placeholder="Auto from RRP × multiplier"
+              style={{ opacity:0.5, cursor:"not-allowed" }}
+            />
+          ) : (
+            <>
+              <Input value={cpRaw} onChange={setCp} placeholder="90.00" type="number" />
+              <label style={{ fontSize:11, color:"#888", marginTop:4, display:"flex", alignItems:"center", gap:6, cursor:"pointer" }}>
+                <input type="checkbox" checked={cpGST} onChange={e=>setCpGST(e.target.checked)} />
+                Already includes GST
+              </label>
+            </>
+          )}
         </Field>
         <Field label="RRP" hint="From supplier catalogue — or use Auto-Fetch below">
           <Input value={rrpRaw} onChange={setRrp} placeholder="200.00" type="number" />
@@ -255,22 +346,19 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
         </Field>
       </div>
 
+      {/* Auto-fetch */}
       <div style={{ marginBottom:12, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
         <Btn onClick={fetchRRP} disabled={fetching} variant="ghost" small>
-          {fetching ? "Fetching..." : <><i className="fa-solid fa-magnifying-glass"></i> Auto-Fetch RRP from Supplier URL / SKU <i className="fa-regular fa-circle-right"></i></>}
+          {fetching ? "Fetching..." : <><i className="fa-solid fa-magnifying-glass"></i> Auto-Fetch RRP from Supplier URL / SKU</>}
         </Btn>
         {fetchMsg && (
-          <span style={{
-            fontSize:11,
-            color: fetchMsg.startsWith("✓") ? "#16a34a"
-                 : fetchMsg.includes("estimated") ? "#f59e0b"
-                 : fetchMsg.includes("manually") ? "#ef4444"
-                 : "#f59e0b"
-          }}>{fetchMsg}</span>
+          <span style={{ fontSize:11, color: fetchMsg.startsWith("✓") ? "#16a34a" : fetchMsg.includes("estimated") ? "#f59e0b" : "#ef4444" }}>
+            {fetchMsg}
+          </span>
         )}
       </div>
 
-      <Field label="Override SP (optional)" hint="Leave blank to auto-calculate using selected pricing mode">
+      <Field label="Override SP (optional)" hint="Leave blank to auto-calculate">
         <Input value={manualSP} onChange={setManualSP} placeholder="Leave blank for auto" type="number" />
       </Field>
 
@@ -281,10 +369,10 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
           </div>
           <div style={{ display:"grid", gridTemplateColumns:"repeat(4,1fr)", gap:10, marginBottom:12 }}>
             {[
-              { label:"CP (inc GST)", val:`$${result.cp}`, color:"#aaa" },
-              { label:"RRP", val:`$${result.rrp}`, color:"#aaa" },
-              { label:"Selling Price", val:`$${result.sp}`, color:"#c9933a" },
-              { label:"Weight", val:`${result.weight} kg`, color:"#aaa" },
+              { label:"CP (inc GST)",  val:`$${result.cp}`,       color:"#aaa" },
+              { label:"RRP",           val:`$${result.rrp}`,      color:"#aaa" },
+              { label:"Selling Price", val:`$${result.sp}`,       color:"#c9933a" },
+              { label:"Weight",        val:`${result.weight} kg`, color:"#aaa" },
             ].map(({ label, val, color }) => (
               <div key={label} style={{ textAlign:"center" }}>
                 <div style={{ fontSize:11, color:"#666", marginBottom:4 }}>{label}</div>
@@ -293,12 +381,8 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
             ))}
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"center" }}>
-            <Badge ok={result.marginOk}>
-              {result.marginOk ? "✓ Margin OK" : "✗ Margin Too Low"}
-            </Badge>
-            <span style={{ fontSize:12, color:"#888" }}>
-              Margin: ${result.actualMargin} / Required: ${result.required}
-            </span>
+            <Badge ok={result.marginOk}>{result.marginOk ? "✓ Margin OK" : "✗ Margin Too Low"}</Badge>
+            <span style={{ fontSize:12, color:"#888" }}>Margin: ${result.actualMargin} / Required: ${result.required}</span>
             {result.weightNote && <span style={{ fontSize:11, color:"#666" }}>{result.weightNote}</span>}
           </div>
         </div>
@@ -307,100 +391,177 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult }) {
   );
 }
 
-// ─── TITLE BUILDER ────────────────────────────────────────────────────────────
+// ─── CHANGE 3 & 4 — TITLE BUILDER with Product Spec + Attribute Tags ──────────
 function TitleBuilder({ category, onChange, sharedBrand, sharedCollection, sharedColour, sharedSize }) {
   const format = TITLE_FORMATS_FE[category] || "Brand > Collection > Product Type > Colour";
-  const parts = format.split(" > ").map(p => p.replace(/\(.*?\)/g,"").trim()).filter(Boolean);
-  const [vals, setVals] = useState({});
+  const parts  = format.split(" > ").map(p => p.replace(/\(.*?\)/g,"").trim()).filter(Boolean);
+  const [vals, setVals]                 = useState({});
+  const [productSpec, setProductSpec]   = useState("");    // Change 3
+  const [selectedTags, setSelectedTags] = useState([]);   // Change 4
+  const [customTag, setCustomTag]       = useState("");    // Change 4 custom input
 
   const SHARED_MAP = {
-    "Brand":      sharedBrand,
-    "Collection": sharedCollection,
-    "Colour":     sharedColour,
-    "Size":       sharedSize,
+    "Brand": sharedBrand, "Collection": sharedCollection,
+    "Colour": sharedColour, "Size": sharedSize,
   };
 
-  // Sync shared fields into local vals whenever they change
+  // Sync shared fields into title builder
   useEffect(() => {
     setVals(prev => {
       const updated = { ...prev };
       let changed = false;
       Object.entries(SHARED_MAP).forEach(([key, val]) => {
         if (parts.includes(key) && val !== undefined && val !== prev[key]) {
-          updated[key] = val;
-          changed = true;
+          updated[key] = val; changed = true;
         }
       });
       return changed ? updated : prev;
     });
   }, [sharedBrand, sharedCollection, sharedColour, sharedSize, category]);
 
-  // Rebuild title whenever vals change
+  // Rebuild full title: base parts + spec + attribute tags
   useEffect(() => {
-    const title = parts.map(p => vals[p] || "").filter(Boolean).join(" ").toUpperCase();
-    onChange(title);
-  }, [vals]);
+    const baseParts = parts.map(p => vals[p] || "").filter(Boolean);
+    const specPart  = productSpec.trim() ? [productSpec.trim()] : [];
+    const tagsPart  = selectedTags.length > 0 ? [selectedTags.join(" ")] : [];
+    onChange([...baseParts, ...specPart, ...tagsPart].join(" ").toUpperCase());
+  }, [vals, productSpec, selectedTags]);
 
   const setVal = (k, v) => setVals(prev => ({ ...prev, [k]: v }));
 
+  const toggleTag = (tag) =>
+    setSelectedTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]);
+
+  const addCustomTag = () => {
+    const t = customTag.trim();
+    if (t && !selectedTags.includes(t)) setSelectedTags(prev => [...prev, t]);
+    setCustomTag("");
+  };
+
   return (
     <div>
-      <SectionTitle>🏷️ Title Builder</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-medal"></i> Title Builder</SectionTitle>
       <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:14, fontSize:12, color:"#c9933a", fontFamily:"monospace" }}>
         Format: {format}
       </div>
 
-      {/* Sync indicator banner */}
       {(sharedBrand || sharedCollection || sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
-          <i className="fa-solid fa-bolt"></i> Fields marked <b>AUTO</b> are synced from Product Details — edit there to update all panels
+          <i className="fa-solid fa-bolt"></i> Fields marked <b>AUTO</b> are synced from Product Details
         </div>
       )}
 
+      {/* Standard format fields */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10 }}>
         {parts.map(p => (
           <Field key={p} label={p}>
             <div style={{ position:"relative" }}>
-              <Input
-                value={vals[p]||""}
-                onChange={v => setVal(p, v)}
-                placeholder={p}
-                style={SHARED_MAP[p] && vals[p] === SHARED_MAP[p] ? { borderColor:"#c9933a55", paddingRight:52 } : {}}
-              />
+              <Input value={vals[p]||""} onChange={v => setVal(p, v)} placeholder={p}
+                style={SHARED_MAP[p] && vals[p] === SHARED_MAP[p] ? { borderColor:"#c9933a55", paddingRight:52 } : {}} />
               {SHARED_MAP[p] && vals[p] === SHARED_MAP[p] && (
-                <span style={{
-                  position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
-                  fontSize:8, color:"#c9933a", fontWeight:800,
-                  background:"#c9933a22", borderRadius:3, padding:"1px 5px",
-                  pointerEvents:"none", letterSpacing:0.5,
-                }}>AUTO</span>
+                <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
+                  fontSize:8, color:"#c9933a", fontWeight:800, background:"#c9933a22",
+                  borderRadius:3, padding:"1px 5px", pointerEvents:"none" }}>AUTO</span>
               )}
             </div>
           </Field>
         ))}
       </div>
 
-      <div style={{ background:"#1a1a1a", borderRadius:8, padding:12, marginTop:8, border:"1px solid #c9933a44" }}>
+      {/* CHANGE 3 — Product Specification field */}
+      <div style={{ background:"#0d0d0d", borderRadius:8, padding:12, marginTop:10, border:"1px solid #333" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"#c9933a", marginBottom:4 }}>
+          <i className="fa-solid fa-star"></i>  Product Specification
+        </div>
+        <div style={{ fontSize:10, color:"#555", marginBottom:8 }}>
+          Extra spec appended to the title — e.g. "500 x 400mm Basin", "4 Star WELS 7.5L/min", "HD Ceramic Disc"
+        </div>
+        <Input value={productSpec} onChange={setProductSpec} placeholder="e.g. 500 x 400mm Basin" />
+        {productSpec.trim() && (
+          <div style={{ fontSize:10, color:"#c9933a", marginTop:4 }}>
+            Will append: {productSpec.trim().toUpperCase()}
+          </div>
+        )}
+      </div>
+
+      {/* CHANGE 4 — Product Attribute Tags (Gooseneck, Lead Free etc.) */}
+      <div style={{ background:"#0d0d0d", borderRadius:8, padding:12, marginTop:10, border:"1px solid #333" }}>
+        <div style={{ fontSize:11, fontWeight:700, color:"#c9933a", marginBottom:4 }}>
+          <i className="fa-solid fa-bars-staggered"></i> Product Attributes
+        </div>
+        <div style={{ fontSize:10, color:"#555", marginBottom:8 }}>
+          Select applicable attributes — appended to the end of the title
+        </div>
+
+        {/* Preset chips */}
+        <div style={{ display:"flex", flexWrap:"wrap", gap:6, marginBottom:10 }}>
+          {PRODUCT_SPEC_TAGS.map(tag => (
+            <div key={tag} onClick={() => toggleTag(tag)}
+              style={{ padding:"4px 10px", borderRadius:20, fontSize:11, fontWeight:600,
+                cursor:"pointer", transition:"all .15s",
+                background: selectedTags.includes(tag) ? "#c9933a"    : "#1a1a1a",
+                color:      selectedTags.includes(tag) ? "#0a0a0a"    : "#888",
+                border:     `1px solid ${selectedTags.includes(tag) ? "#c9933a" : "#333"}` }}>
+              {tag}
+            </div>
+          ))}
+        </div>
+
+        {/* Custom attribute */}
+        <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+          <Input value={customTag} onChange={setCustomTag} placeholder="Add custom attribute..."
+            style={{ flex:1 }} />
+          <Btn onClick={addCustomTag} variant="ghost" small disabled={!customTag.trim()}>+ Add</Btn>
+        </div>
+
+        {/* Selected tags display */}
+        {selectedTags.length > 0 && (
+          <div style={{ marginTop:10, background:"#111", borderRadius:6, padding:"8px 12px", border:"1px solid #222" }}>
+            <div style={{ fontSize:10, color:"#555", marginBottom:6 }}>Selected attributes</div>
+            <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+              {selectedTags.map(tag => (
+                <div key={tag} style={{ display:"flex", alignItems:"center", gap:4,
+                  background:"#c9933a22", border:"1px solid #c9933a44",
+                  borderRadius:20, padding:"3px 10px", fontSize:11, color:"#c9933a" }}>
+                  {tag}
+                  <span onClick={() => toggleTag(tag)}
+                    style={{ cursor:"pointer", fontWeight:700, marginLeft:2 }}>✕</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Generated title preview */}
+      <div style={{ background:"#1a1a1a", borderRadius:8, padding:12, marginTop:10, border:"1px solid #c9933a44" }}>
         <div style={{ fontSize:11, color:"#888", marginBottom:4 }}>Generated Title</div>
         <div style={{ fontSize:14, fontWeight:700, color:"#fff", wordBreak:"break-word" }}>
-          {parts.map(p=>vals[p]).filter(Boolean).join(" ").toUpperCase() || "— fill fields above —"}
+          {[
+            ...parts.map(p => vals[p]).filter(Boolean),
+            ...(productSpec.trim() ? [productSpec.trim()] : []),
+            ...(selectedTags.length > 0 ? [selectedTags.join(" ")] : []),
+          ].join(" ").toUpperCase() || "— fill fields above —"}
         </div>
       </div>
     </div>
   );
 }
 
-// ─── DESCRIPTION BUILDER ──────────────────────────────────────────────────────
+// ─── CHANGE 2 — DESCRIPTION BUILDER with single-field warranty rows ───────────
 function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
   const fields = (DESCRIPTION_FEATURES[category] || DESCRIPTION_FEATURES.default);
-  const [features, setFeatures] = useState({});
-  const [colours, setColours] = useState("");
-  const [sizes, setSizes] = useState("");
+  const [features, setFeatures]   = useState({});
+  const [colours, setColours]     = useState("");
+  const [sizes, setSizes]         = useState("");
+
+  // Change 2: each row is now a single string instead of {value, label}
   const [warrantyRows, setWarrantyRows] = useState([
-    { label: "Product or Parts Warranty", value: "" },
-    { label: "Labour Warranty", value: "" },
+    "5 years Product Warranty",
+    "2 years Labour Warranty",
   ]);
+
   const [aiModel, setAiModel]     = useState("gemini");
   const [aiLoading, setAiLoading] = useState(false);
   const [aiDesc, setAiDesc]       = useState("");
@@ -410,31 +571,18 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize }) {
   const [images, setImages]       = useState([]);
   const [previews, setPreviews]   = useState([]);
 
-  // Sync shared colour into Available Colours (only pre-fills, doesn't override manual input)
-  useEffect(() => {
-    if (sharedColour) setColours(prev => prev || sharedColour);
-  }, [sharedColour]);
+  useEffect(() => { if (sharedColour) setColours(prev => prev || sharedColour); }, [sharedColour]);
+  useEffect(() => { if (sharedSize)   setSizes(prev   => prev || sharedSize);   }, [sharedSize]);
 
-  // Sync shared size into Available Sizes
-  useEffect(() => {
-    if (sharedSize) setSizes(prev => prev || sharedSize);
-  }, [sharedSize]);
-
-  const setFeature = (k, v) => setFeatures(prev => ({ ...prev, [k]: v }));
-
-  const addWarrantyRow = () =>
-    setWarrantyRows(prev => [...prev, { label: "", value: "" }]);
-  const removeWarrantyRow = (i) =>
-    setWarrantyRows(prev => prev.filter((_, idx) => idx !== i));
-  const updateWarrantyRow = (i, field, val) =>
-    setWarrantyRows(prev => prev.map((r, idx) => idx === i ? { ...r, [field]: val } : r));
+  const setFeature        = (k, v) => setFeatures(prev => ({ ...prev, [k]: v }));
+  const addWarrantyRow    = ()      => setWarrantyRows(prev => [...prev, ""]);
+  const removeWarrantyRow = (i)     => setWarrantyRows(prev => prev.filter((_, idx) => idx !== i));
+  const updateWarrantyRow = (i, v)  => setWarrantyRows(prev => prev.map((r, idx) => idx === i ? v : r));
 
   const handleImages = (e) => {
     const files = Array.from(e.target.files).slice(0, 2);
-    setImages(files);
-    setPreviews(files.map(f => URL.createObjectURL(f)));
+    setImages(files); setPreviews(files.map(f => URL.createObjectURL(f)));
   };
-
   const removeImage = (i) => {
     setImages(prev   => prev.filter((_,idx)=>idx!==i));
     setPreviews(prev => prev.filter((_,idx)=>idx!==i));
@@ -451,24 +599,23 @@ ${sizes ? `Also Available in Sizes: ${sizes}` : ""}
 ${featureBlock}
 
 **Warranty Information:**
-${warrantyRows.filter(r=>r.value).map(r => `• ${r.value} ${r.label}`).join("\n")}
+${warrantyRows.filter(r => r.trim()).map(r => `• ${r.trim()}`).join("\n")}
 
 ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
   const generateAI = async () => {
     setAiLoading(true); setAiError(""); setAiNote("");
     try {
-      const formData = new FormData();
-      formData.append("name",          title || "");
-      formData.append("colours",       colours);
-      formData.append("material",      features.material || "");
-      formData.append("compatibility", features.compatible || "");
-      formData.append("warranty",      warrantyRows.filter(r=>r.value).map(r=>`${r.value} ${r.label}`).join(", ") || "");
-      formData.append("category",      category || "");
-      formData.append("model",         aiModel);
-      images.forEach(img =>            formData.append("images", img));
-
-      const { data } = await axios.post(`${API}/description/generate`, formData, {
+      const fd = new FormData();
+      fd.append("name",          title || "");
+      fd.append("colours",       colours);
+      fd.append("material",      features.material || "");
+      fd.append("compatibility", features.compatible || "");
+      fd.append("warranty",      warrantyRows.filter(r=>r.trim()).join(", ") || "");
+      fd.append("category",      category || "");
+      fd.append("model",         aiModel);
+      images.forEach(img => fd.append("images", img));
+      const { data } = await axios.post(`${API}/description/generate`, fd, {
         headers: { "Content-Type": "multipart/form-data" },
       });
       setAiDesc(data.description);
@@ -479,10 +626,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
     setAiLoading(false);
   };
 
-  const copyAll = () => {
-    navigator.clipboard.writeText(fullDescription);
-    setCopied(true); setTimeout(() => setCopied(false), 2000);
-  };
+  const copyAll = () => { navigator.clipboard.writeText(fullDescription); setCopied(true); setTimeout(() => setCopied(false), 2000); };
 
   const MODEL_INFO = {
     gemini: { label:"Gemini 2.0 Flash",   info:"Gemini", tag:"Free · Supports images",       color:"#4285f4" },
@@ -492,8 +636,6 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
   return (
     <div>
       <SectionTitle><i className="fa-solid fa-file-pen"></i> Description Builder</SectionTitle>
-
-      {/* Sync indicator */}
       {(sharedColour || sharedSize) && (
         <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a33",
           borderRadius:6, padding:"5px 10px", marginBottom:10, display:"flex", alignItems:"center", gap:6 }}>
@@ -501,6 +643,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         </div>
       )}
 
+      {/* Available Colours / Sizes */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         <Field label="Available in Colours">
           <div style={{ position:"relative" }}>
@@ -526,54 +669,49 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
         </Field>
       </div>
 
+      {/* Feature fields */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         {fields.map(f => (
           <Field key={f} label={FEATURE_LABELS[f] || f}>
-            <div style={{ position:"relative" }}>
-              <Input
-                value={features[f]||""}
-                onChange={v=>setFeature(f,v)}
-                placeholder={FEATURE_LABELS[f] || f}
-                style={
-                  (f === "colour" && sharedColour && features[f] === sharedColour) ||
-                  (f === "size"   && sharedSize   && features[f] === sharedSize)
-                    ? { borderColor:"#c9933a55", paddingRight:52 } : {}
-                }
-              />
-              {((f === "colour" && sharedColour && features[f] === sharedColour) ||
-                (f === "size"   && sharedSize   && features[f] === sharedSize)) && (
-                <span style={{ position:"absolute", right:8, top:"50%", transform:"translateY(-50%)",
-                  fontSize:8, color:"#c9933a", fontWeight:800, background:"#c9933a22",
-                  borderRadius:3, padding:"1px 5px", pointerEvents:"none" }}>AUTO</span>
-              )}
-            </div>
+            <Input value={features[f]||""} onChange={v=>setFeature(f,v)} placeholder={FEATURE_LABELS[f] || f} />
           </Field>
         ))}
       </div>
 
-      {/* Dynamic Warranty Section */}
+      {/* CHANGE 2 — Single text field per warranty row */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}><i className="fa-solid fa-shield-halved"></i> Warranty Information</div>
-          <Btn onClick={addWarrantyRow} variant="ghost" small>+ Add Warranty</Btn>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+          <div style={{ fontSize:12, fontWeight:700, color:"#c9933a" }}>
+            <i className="fa-solid fa-shield-halved"></i> Warranty Information
+          </div>
+          <Btn onClick={addWarrantyRow} variant="ghost" small>+ Add Row</Btn>
         </div>
-        <div style={{ fontSize:11, color:"#555", marginBottom:10 }}>
-          Example: "15 Year Product or Parts Warranty" · "Lifetime Stainless Steel 316 Warranty" · "1 Year Labour Warranty"
+        <div style={{ fontSize:10, color:"#555", marginBottom:10 }}>
+          Type the full warranty line — e.g. "15 Year Product or Parts Warranty" · "Lifetime Stainless Steel 316 Warranty"
         </div>
         {warrantyRows.map((row, i) => (
-          <div key={i} style={{ display:"grid", gridTemplateColumns:"110px 1fr 32px", gap:8, marginBottom:8, alignItems:"center" }}>
-            <Input value={row.value} onChange={v => updateWarrantyRow(i, "value", v)} placeholder="e.g. 5 Year" />
-            <Input value={row.label} onChange={v => updateWarrantyRow(i, "label", v)} placeholder="e.g. Product or Parts Warranty" />
+          <div key={i} style={{ display:"grid", gridTemplateColumns:"1fr 32px", gap:8, marginBottom:8, alignItems:"center" }}>
+            <Input
+              value={row}
+              onChange={v => updateWarrantyRow(i, v)}
+              placeholder={
+                i === 0 ? "e.g. 15 Year Product or Parts Warranty" :
+                i === 1 ? "e.g. 1 Year Labour Warranty" :
+                          "e.g. Lifetime Stainless Steel 316 Warranty"
+              }
+            />
             <button onClick={() => removeWarrantyRow(i)}
               style={{ background:"#7f1d1d44", border:"1px solid #7f1d1d", borderRadius:6,
-                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}><i className="fa-solid fa-xmark"></i></button>
+                color:"#ef4444", cursor:"pointer", fontSize:14, height:36, width:32 }}>
+              <i className="fa-solid fa-xmark"></i>
+            </button>
           </div>
         ))}
-        {warrantyRows.some(r=>r.value||r.label) && (
+        {warrantyRows.some(r => r.trim()) && (
           <div style={{ marginTop:10, background:"#111", borderRadius:6, padding:"8px 12px", border:"1px solid #222" }}>
             <div style={{ fontSize:10, color:"#555", marginBottom:4 }}>Preview</div>
-            {warrantyRows.filter(r=>r.value||r.label).map((r,i) => (
-              <div key={i} style={{ fontSize:12, color:"#ccc" }}>• {r.value} {r.label}</div>
+            {warrantyRows.filter(r => r.trim()).map((r, i) => (
+              <div key={i} style={{ fontSize:12, color:"#ccc" }}>• {r.trim()}</div>
             ))}
           </div>
         )}
@@ -581,7 +719,9 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
       {/* AI Generator */}
       <div style={{ background:"#0d0d0d", borderRadius:10, padding:14, marginBottom:14, border:"1px solid #333" }}>
-        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}><i className="fa-solid fa-robot"></i> AI Description (75 words)</div>
+        <div style={{ fontSize:12, fontWeight:700, color:"#c9933a", marginBottom:12 }}>
+          <i className="fa-solid fa-microchip"></i> AI Description (75 words)
+        </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:12 }}>
           {Object.entries(MODEL_INFO).map(([key, info]) => (
             <div key={key} onClick={() => setAiModel(key)}
@@ -596,9 +736,7 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
         {aiModel === "gemini" && (
           <div style={{ marginBottom:12 }}>
-            <div style={{ fontSize:11, color:"#888", marginBottom:6 }}>
-              Upload 1–2 product images (optional) — Gemini analyses them visually
-            </div>
+            <div style={{ fontSize:11, color:"#888", marginBottom:6 }}>Upload 1–2 product images (optional) — Gemini analyses them visually</div>
             <label style={{ display:"inline-block", padding:"7px 14px", borderRadius:8, fontSize:12,
               fontWeight:600, background:"#1a1a1a", border:"1px dashed #444", color:"#aaa", cursor:"pointer" }}>
               <i className="fa-solid fa-paperclip"></i> Choose Images (max 2)
@@ -673,16 +811,13 @@ ${aiDesc || "[Click Generate AI Description below]"}`.trim();
 
 // ─── TAGS & METAFIELDS ────────────────────────────────────────────────────────
 function TagsPanel({ category, brand, colour, size, style: pStyle, productType }) {
-  const colourTag = colour ? `Colour_${colour}` : "";
-  const brandTag  = brand  ? `Brand_${brand}`   : "";
-  const styleTag  = pStyle ? `Style_${pStyle}`  : "";
-  const sizeTag   = size   ? `Size_${size}`     : "";
-
-  const tags = [category, brand, colour, pStyle, productType, colourTag, brandTag, styleTag, sizeTag]
-    .filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
+  const tags = [
+    category, brand, colour, pStyle, productType,
+    colour ? `Colour_${colour}` : "", brand ? `Brand_${brand}` : "",
+    pStyle ? `Style_${pStyle}` : "", size ? `Size_${size}` : "",
+  ].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i);
 
   const metafields = { Brand: brand, Colour: colour, Size: size, Style: pStyle, Type: productType, Collections: category };
-
   const [copied, setCopied] = useState("");
   const copy = (text, key) => { navigator.clipboard.writeText(text); setCopied(key); setTimeout(()=>setCopied(""),1500); };
 
@@ -730,26 +865,22 @@ function RepriceCalculator() {
     const competitors = [c1, c2].filter(Boolean).map(Number);
     try {
       const { data } = await axios.post(`${API}/export/reprice`, {
-        cp: +cp, rrp: rrp ? +rrp : null,
-        currentSP: +currentSP, minMargin: +minMargin,
-        competitorPrices: competitors,
+        cp: +cp, rrp: rrp ? +rrp : null, currentSP: +currentSP,
+        minMargin: +minMargin, competitorPrices: competitors,
       });
       setResult(data);
     } catch {
       const results = competitors.map((price, i) => {
         const potentialMargin = price - +cp;
-        const canReprice = potentialMargin >= +minMargin;
-        const newSP = canReprice ? (rrp ? Math.min(price, +rrp) : price) : Math.round(+cp + +minMargin);
-        return {
-          competitor: i + 1, competitorPrice: price,
-          potentialMargin: +potentialMargin.toFixed(2),
-          canReprice, newSP: Math.round(newSP),
+        const canReprice      = potentialMargin >= +minMargin;
+        const newSP           = canReprice ? (rrp ? Math.min(price, +rrp) : price) : Math.round(+cp + +minMargin);
+        return { competitor: i+1, competitorPrice: price,
+          potentialMargin: +potentialMargin.toFixed(2), canReprice, newSP: Math.round(newSP),
           reason: canReprice
             ? `Potential margin $${potentialMargin.toFixed(2)} ≥ min margin $${minMargin}`
-            : `Margin too low — use CP + min margin`,
-        };
+            : `Margin too low — use CP + min margin` };
       });
-      const valid = results.filter(r=>r.canReprice).map(r=>r.newSP);
+      const valid         = results.filter(r=>r.canReprice).map(r=>r.newSP);
       const recommendedSP = valid.length > 0 ? Math.min(...valid) : Math.round(+cp + +minMargin);
       setResult({ cp:+cp, rrp:rrp?+rrp:null, currentSP:+currentSP, minMargin:+minMargin,
         results, recommendedSP, saving: currentSP ? Math.round(+currentSP - recommendedSP) : 0 });
@@ -764,29 +895,16 @@ function RepriceCalculator() {
         From Special Guidelines: Potential Margin = Competitor Price − Cost Price (inc GST)
       </div>
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:10, marginBottom:12 }}>
-        <Field label="Cost Price (inc GST)">
-          <Input value={cp} onChange={setCp} placeholder="220.00" type="number" />
-        </Field>
-        <Field label="RRP (optional)">
-          <Input value={rrp} onChange={setRrp} placeholder="350.00" type="number" />
-        </Field>
-        <Field label="Current SP">
-          <Input value={currentSP} onChange={setCurrentSP} placeholder="350.00" type="number" />
-        </Field>
-        <Field label="Min Margin for Category">
-          <Input value={minMargin} onChange={setMinMargin} placeholder="e.g. 65 for Basins" type="number" />
-        </Field>
-        <Field label="Competitor 1 Price">
-          <Input value={c1} onChange={setC1} placeholder="315.00" type="number" />
-        </Field>
-        <Field label="Competitor 2 Price">
-          <Input value={c2} onChange={setC2} placeholder="299.00" type="number" />
-        </Field>
+        <Field label="Cost Price (inc GST)"><Input value={cp} onChange={setCp} placeholder="220.00" type="number" /></Field>
+        <Field label="RRP (optional)"><Input value={rrp} onChange={setRrp} placeholder="350.00" type="number" /></Field>
+        <Field label="Current SP"><Input value={currentSP} onChange={setCurrentSP} placeholder="350.00" type="number" /></Field>
+        <Field label="Min Margin for Category"><Input value={minMargin} onChange={setMinMargin} placeholder="e.g. 65 for Basins" type="number" /></Field>
+        <Field label="Competitor 1 Price"><Input value={c1} onChange={setC1} placeholder="315.00" type="number" /></Field>
+        <Field label="Competitor 2 Price"><Input value={c2} onChange={setC2} placeholder="299.00" type="number" /></Field>
       </div>
       <Btn onClick={calculate} disabled={loading || !cp || !minMargin}>
         {loading ? "Calculating..." : "Calculate Reprice"}
       </Btn>
-
       {result && (
         <div style={{ marginTop:16 }}>
           {result.results.map(r => (
@@ -803,13 +921,9 @@ function RepriceCalculator() {
           <div style={{ background:"#c9933a22", border:"1px solid #c9933a44", borderRadius:8, padding:14, marginTop:8 }}>
             <div style={{ fontSize:12, color:"#c9933a", fontWeight:700, marginBottom:4 }}>Recommended Final SP</div>
             <div style={{ fontSize:28, fontWeight:900, color:"#c9933a" }}>${result.recommendedSP}</div>
-            {result.saving > 0 && (
-              <div style={{ fontSize:12, color:"#888", marginTop:4 }}>Price reduction from current: ${result.saving}</div>
-            )}
+            {result.saving > 0 && <div style={{ fontSize:12, color:"#888", marginTop:4 }}>Price reduction from current: ${result.saving}</div>}
             {result.rrp && result.recommendedSP > result.rrp && (
-              <div style={{ fontSize:11, color:"#ef4444", marginTop:4 }}>
-                ⚠ Exceeds RRP ${result.rrp} — needs senior approval
-              </div>
+              <div style={{ fontSize:11, color:"#ef4444", marginTop:4 }}>⚠ Exceeds RRP ${result.rrp} — needs senior approval</div>
             )}
           </div>
         </div>
@@ -825,22 +939,19 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <div style={{ fontSize:16, fontWeight:700 }}>Product Queue ({products.length})</div>
         <div style={{ display:"flex", gap:8 }}>
-          <Btn onClick={onExportCSV} variant="primary" disabled={products.length===0}>⬇ Shopify Import CSV</Btn>
+          <Btn onClick={onExportCSV}  variant="primary" disabled={products.length===0}>⬇ Shopify Import CSV</Btn>
           <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}>⬇ Final Pricing + Competitor (.xlsx)</Btn>
         </div>
       </div>
-
       <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:11, color:"#666", border:"1px solid #1a1a1a" }}>
         <span style={{ color:"#c9933a", fontWeight:700 }}>Shopify Import CSV</span> — exact 7-column format ready to import directly into Shopify &nbsp;·&nbsp;
         <span style={{ color:"#16a34a", fontWeight:700 }}>Final Pricing .xlsx</span> — 3 sheets: Final Pricing + Competitor Analysis + Pricing Reference
       </div>
-
       {products.length === 0 && (
         <div style={{ textAlign:"center", color:"#555", padding:40, background:"#0d0d0d", borderRadius:10 }}>
           No products in queue yet — add products using the Add Product tab
         </div>
       )}
-
       <div style={{ display:"flex", flexDirection:"column", gap:8 }}>
         {products.map((p, i) => (
           <div key={p._id || i} style={{ background:"#111", border:"1px solid #222", borderRadius:10,
@@ -873,18 +984,18 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
 
 // ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [tab,      setTab]      = useState("form");
+  const [tab, setTab]           = useState("form");
   const [products, setProducts] = useState([]);
-  const [saving,   setSaving]   = useState(false);
-  const [saveMsg,  setSaveMsg]  = useState("");
+  const [saving, setSaving]     = useState(false);
+  const [saveMsg, setSaveMsg]   = useState("");
 
-  // ── Shared fields (synced across all panels) ──────────────────────────────
+  // Shared fields
   const [sharedBrand,      setSharedBrand]      = useState("");
   const [sharedCollection, setSharedCollection] = useState("");
   const [sharedColour,     setSharedColour]     = useState("");
   const [sharedSize,       setSharedSize]       = useState("");
 
-  // ── Non-shared form fields ────────────────────────────────────────────────
+  // Non-shared fields
   const [supplierUrl,    setSupplierUrl]    = useState("");
   const [sku,            setSku]            = useState("");
   const [category,       setCategory]       = useState("");
@@ -903,15 +1014,11 @@ export default function App() {
     setSaving(true);
     const payload = {
       supplierUrl, sku, productTitle: generatedTitle, category, productType,
-      brand:      sharedBrand,
-      collection: sharedCollection,
-      colour:     sharedColour,
-      size:       sharedSize,
-      style,
+      brand: sharedBrand, collection: sharedCollection,
+      colour: sharedColour, size: sharedSize, style,
       cpGST: pricing?.cp, rrp: pricing?.rrp, sp: pricing?.sp,
       weight: pricing?.weight, marginOk: pricing?.marginOk,
-      requiredMargin: pricing?.required,
-      notes, status: "draft",
+      requiredMargin: pricing?.required, notes, status: "draft",
     };
     try {
       const { data } = await axios.post(`${API}/products`, payload);
@@ -934,24 +1041,23 @@ export default function App() {
     try {
       const res = await axios.post(`${API}/export/shopify-csv`, { products }, { responseType: "blob" });
       const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url; a.download = `Austpek_Shopify_Import_${Date.now()}.csv`; a.click();
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Austpek_Shopify_Import_${Date.now()}.csv`; a.click();
     } catch {
       const headers = ["Title","Variant SKU","Variant Grams","Variant Price",
-                       "Variant Compare At Price","Supplier URL (product.metafields.custom.supplier_url)","Cost per item"];
+        "Variant Compare At Price","Supplier URL (product.metafields.custom.supplier_url)","Cost per item"];
       const rows = products.map(p => [
-        p.productTitle || "", p.sku || "",
-        p.weight ? Math.round(+p.weight * 1000) : "",
-        p.sp  ? `$${Math.round(p.sp)}.00`  : "",
-        p.rrp ? `$${Math.round(p.rrp)}.00` : "",
-        p.supplierUrl || "",
+        p.productTitle||"", p.sku||"",
+        p.weight ? Math.round(+p.weight*1000) : "",
+        p.sp    ? `$${Math.round(p.sp)}.00`    : "",
+        p.rrp   ? `$${Math.round(p.rrp)}.00`   : "",
+        p.supplierUrl||"",
         p.cpGST ? `$${Math.round(p.cpGST)}.00` : "",
       ]);
-      const csv = [headers, ...rows].map(r => r.join(",")).join("\r\n");
-      const blob = new Blob([csv], { type:"text/csv" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url; a.download = "Austpek_Shopify_Import.csv"; a.click();
+      const csv  = [headers,...rows].map(r=>r.join(",")).join("\r\n");
+      const blob = new Blob([csv],{type:"text/csv"});
+      const url  = URL.createObjectURL(blob);
+      const a    = document.createElement("a"); a.href=url; a.download="Austpek_Shopify_Import.csv"; a.click();
     }
   };
 
@@ -959,17 +1065,15 @@ export default function App() {
     try {
       const res = await axios.post(`${API}/export/xlsx`, { products }, { responseType: "blob" });
       const url = URL.createObjectURL(res.data);
-      const a = document.createElement("a");
-      a.href = url; a.download = `Austpek_Final_Pricing_${Date.now()}.xlsx`; a.click();
-    } catch {
-      alert("Export failed — make sure backend is running");
-    }
+      const a = document.createElement("a"); a.href = url;
+      a.download = `Austpek_Final_Pricing_${Date.now()}.xlsx`; a.click();
+    } catch { alert("Export failed — make sure backend is running"); }
   };
 
   const NAV = [
-    { key: "form",    label: "+ Add Product" },
+    { key:"form",    label:"+ Add Product" },
     { key: "queue",   label: (<><i className="fa-solid fa-list"></i>{" "}Queue ({products.length})</>) },
-    { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
+    { key: "reprice", label: <><i className="fa-solid fa-bolt"></i> Reprice Tool</> }
   ];
 
   return (
@@ -979,7 +1083,9 @@ export default function App() {
         display:"flex", alignItems:"center", justifyContent:"space-between", height:56 }}>
         <div style={{ display:"flex", alignItems:"center", gap:12 }}>
           <div style={{ fontSize:18, fontWeight:900, color:"#c9933a", letterSpacing:1 }}>AUSTPEK</div>
-          <div style={{ fontSize:12, color:"#555", marginTop:2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>
+          <div style={{ fontSize:12, color:"#555", marginTop:2 }}>
+            <i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool
+          </div>
         </div>
         <div style={{ display:"flex", gap:4 }}>
           {NAV.map(n => (
@@ -1004,14 +1110,11 @@ export default function App() {
             {/* LEFT COLUMN */}
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               <Card>
-                <SectionTitle>📦 Product Details</SectionTitle>
-
-                {/* Sync hint banner */}
+                <SectionTitle><i className="fa-solid fa-circle-info"></i> Product Details</SectionTitle>
                 <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a22",
                   borderRadius:6, padding:"5px 10px", marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>
                   <i className="fa-solid fa-bolt"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
                 </div>
-
                 <Field label="Supplier URL">
                   <Input value={supplierUrl} onChange={setSupplierUrl} placeholder="https://supplier.com/product" />
                 </Field>
@@ -1021,8 +1124,6 @@ export default function App() {
                 <Field label="Category *">
                   <Select value={category} onChange={setCategory} options={ALL_CATEGORIES} placeholder="Select category" />
                 </Field>
-
-                {/* Shared fields */}
                 <Field label="Brand">
                   <Input value={sharedBrand} onChange={setSharedBrand} placeholder="e.g. Caroma, TOTO, Riva" />
                 </Field>
@@ -1035,7 +1136,6 @@ export default function App() {
                 <Field label="Size">
                   <Input value={sharedSize} onChange={setSharedSize} placeholder="e.g. 600mm, 900mm" />
                 </Field>
-
                 <Field label="Style">
                   <Select value={style} onChange={setStyle}
                     options={["Contemporary","Traditional","Hamptons","Smart Bathroom","Beach","Coastal"]} />
@@ -1047,14 +1147,8 @@ export default function App() {
 
               {category && (
                 <Card>
-                  <TagsPanel
-                    category={category}
-                    brand={sharedBrand}
-                    colour={sharedColour}
-                    size={sharedSize}
-                    style={style}
-                    productType={productType}
-                  />
+                  <TagsPanel category={category} brand={sharedBrand} colour={sharedColour}
+                    size={sharedSize} style={style} productType={productType} />
                 </Card>
               )}
             </div>
@@ -1063,38 +1157,21 @@ export default function App() {
             <div style={{ display:"flex", flexDirection:"column", gap:16 }}>
               {category && (
                 <Card>
-                  <TitleBuilder
-                    category={category}
-                    onChange={setGeneratedTitle}
-                    sharedBrand={sharedBrand}
-                    sharedCollection={sharedCollection}
-                    sharedColour={sharedColour}
-                    sharedSize={sharedSize}
-                  />
+                  <TitleBuilder category={category} onChange={setGeneratedTitle}
+                    sharedBrand={sharedBrand} sharedCollection={sharedCollection}
+                    sharedColour={sharedColour} sharedSize={sharedSize} />
                 </Card>
               )}
-
               <Card>
-                <PricingPanel
-                  category={category}
-                  brand={sharedBrand}
-                  supplierUrl={supplierUrl}
-                  sku={sku}
-                  onResult={setPricing}
-                />
+                <PricingPanel category={category} brand={sharedBrand}
+                  supplierUrl={supplierUrl} sku={sku} onResult={setPricing} />
               </Card>
-
               {category && (
                 <Card>
-                  <DescriptionBuilder
-                    title={generatedTitle}
-                    category={category}
-                    sharedColour={sharedColour}
-                    sharedSize={sharedSize}
-                  />
+                  <DescriptionBuilder title={generatedTitle} category={category}
+                    sharedColour={sharedColour} sharedSize={sharedSize} />
                 </Card>
               )}
-
               <div style={{ display:"flex", gap:12, alignItems:"center" }}>
                 <Btn onClick={saveProduct} disabled={saving} variant="primary">
                   {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
@@ -1111,12 +1188,8 @@ export default function App() {
 
         {/* ── QUEUE ── */}
         {tab === "queue" && (
-          <ProductList
-            products={products}
-            onDelete={deleteProduct}
-            onExportCSV={exportCSV}
-            onExportXlsx={exportXlsx}
-          />
+          <ProductList products={products} onDelete={deleteProduct}
+            onExportCSV={exportCSV} onExportXlsx={exportXlsx} />
         )}
 
         {/* ── REPRICE TOOL ── */}

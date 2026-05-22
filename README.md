@@ -5,16 +5,19 @@
 
 ---
 
-## What's New in v2
+## What's New in v2.1
 
-| Feature | v1 | v2 |
-|---|---|---|
-| AI Models | Gemini only | Gemini 2.0 Flash + Groq Llama 3.3 70B |
-| Image Upload | ✗ | ✅ Up to 2 images (Gemini only) |
-| Export | Single .xlsx | Shopify Import CSV + Final Pricing .xlsx |
-| Reprice Tool | ✗ | ✅ Competitive Repricing Calculator (new tab) |
-| Pricing Formulas | ✗ | ✅ Special Guidelines reference panel |
-| Queue View | Basic cards | CP / SP / RRP / Weight per product |
+| Feature | v1 | v2 | v2.1 |
+|---|---|---|---|
+| AI Models | Gemini only | Gemini 2.0 Flash + Groq Llama 3.3 70B | ✅ Same |
+| Image Upload | ✗ | ✅ Up to 2 images (Gemini only) | ✅ Same |
+| Export | Single .xlsx | Shopify Import CSV + Final Pricing .xlsx | ✅ Same |
+| Reprice Tool | ✗ | ✅ Competitive Repricing Calculator | ✅ Same |
+| Pricing Formulas | ✗ | ✅ Special Guidelines reference panel | ✅ Same |
+| Queue View | Basic cards | CP / SP / RRP / Weight per product | ✅ Same |
+| Responsive Layout | ✗ | ✗ | ✅ Mobile + Tablet support |
+| Mobile Navigation | ✗ | ✗ | ✅ Section-by-section tab bar |
+| Sticky Header | ✗ | ✗ | ✅ Fixed top nav on all screen sizes |
 
 ---
 
@@ -31,6 +34,28 @@
 | **Product Queue** | Save multiple products, review pricing + margin status before export |
 | **Shopify Import CSV** | Exports exact 7-column format (Title, SKU, Grams, Price, Compare At Price, Supplier URL, Cost) ready to import into Shopify |
 | **Final Pricing .xlsx** | 3-sheet Excel file: Final Pricing + Competitor Analysis + Pricing Reference |
+
+---
+
+## Responsive Layout
+
+The frontend automatically adapts to screen size:
+
+| Screen | Layout |
+|---|---|
+| **Desktop** (≥ 1024px) | 2-column layout — Details + Tags on left, Title + Pricing + Description on right |
+| **Tablet** (640px – 1023px) | Single column with section tab bar at top |
+| **Mobile** (< 640px) | Single column with section tab bar at top, compact header |
+
+### Mobile Section Tabs
+
+On tablet and mobile, the Add Product form is split into 5 navigable sections:
+
+```
+[ Details ] [ Title ] [ Pricing ] [ Desc ] [ Tags ]
+```
+
+The **Save to Queue** button is always visible at the bottom regardless of which section is active.
 
 ---
 
@@ -55,7 +80,7 @@ austpek-tool/
     │   └── index.html
     └── src/
         ├── index.js
-        └── App.js                 # Complete React app (all components)
+        └── App.js                 # Complete React app (all components + responsive logic)
 ```
 
 ---
@@ -147,6 +172,8 @@ User selects model in UI
 | POST | `/api/products` | Save a product |
 | DELETE | `/api/products/:id` | Delete a product |
 | POST | `/api/description/generate` | Generate AI description (Gemini or Groq) |
+| POST | `/api/description/fetch-from-url` | Scrape supplier page and auto-fill all fields |
+| POST | `/api/description/fetch-rrp` | Fetch RRP from supplier URL or SKU |
 | POST | `/api/description/template` | Build structured description block |
 | GET | `/api/description/features/:category` | Get feature fields for a category |
 | GET | `/api/description/test-gemini` | Diagnose Gemini API key + model availability |
@@ -193,21 +220,37 @@ User selects model in UI
 
 ---
 
+## Pricing Modes
+
+The Pricing Calculator supports 5 modes selectable in the UI:
+
+| Mode | How it works |
+|---|---|
+| **CP + Min Margin** | Default — adds the category minimum margin to CP |
+| **RRP × 0.85** | Sets SP to 15% off RRP |
+| **RRP × 0.90** | Sets SP to 10% off RRP |
+| **CP = RRP × ?** | Derives CP from a custom RRP multiplier (e.g. RRP × 0.65) |
+| **SP = RRP × ?** | Sets SP from a custom RRP multiplier (e.g. RRP × 0.85) |
+
+---
+
 ## Workflow
 
 1. Open the tool and go to **➕ Add Product**
-2. Select **Category** → Title format and description fields appear automatically
-3. Fill in Brand, Collection, Colour, Size → title builds live in UPPERCASE
-4. Enter CP from supplier → SP auto-calculates with green ✓ / red ✗ margin indicator
-5. Fill in description feature fields + warranty years
-6. Click **Generate with Gemini** (optionally upload 1–2 product images) or **Generate with Groq**
-7. Edit the AI description if needed
-8. Click **💾 Save to Queue**
-9. Repeat for all products in the batch
-10. Go to **📋 Queue** tab
-11. Click **⬇ Shopify Import CSV** to download the Shopify-ready file
-12. Click **⬇ Final Pricing + Competitor (.xlsx)** for the pricing review sheet
-13. Send files to the developer for Shopify upload
+2. *(Optional)* Paste a supplier URL and click **Auto-fill All Fields from URL** — AI scrapes and pre-fills Brand, Collection, Colour, Size, RRP and generates a description automatically
+3. Select **Category** → Title format and description fields appear automatically
+4. Select **Product Type** → locks in the exact title field sequence and Shopify tag schema
+5. Fill in Brand, Collection, Colour, Size → title builds live in UPPERCASE
+6. Enter CP from supplier → SP auto-calculates with green ✓ / red ✗ margin indicator
+7. Fill in description feature fields + warranty rows
+8. Click **Generate with Gemini** (optionally upload 1–2 product images) or **Generate with Groq**
+9. Edit the AI description if needed
+10. Click **💾 Save to Queue**
+11. Repeat for all products in the batch
+12. Go to **📋 Queue** tab
+13. Click **⬇ Shopify Import CSV** to download the Shopify-ready file
+14. Click **⬇ Final Pricing + Competitor (.xlsx)** for the pricing review sheet
+15. Send files to the developer for Shopify upload
 
 ---
 
@@ -215,7 +258,7 @@ User selects model in UI
 
 | Service | URL |
 |---|---|
-| Frontend (Vercel) | https://your-vercel-url.vercel.app |
+| Frontend (Vercel) | https://product-listing-tool.vercel.app |
 | Backend (Render) | https://austpek-backend.onrender.com |
 
 ### Frontend — Vercel
@@ -255,6 +298,8 @@ const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 | `DB offline — saved locally` | MongoDB not running — products in browser memory only, export before closing |
 | `Margin Too Low` badge | SP does not meet minimum margin — increase SP or verify CP is correct |
 | Title not showing | Select a Category first — Title Builder only renders after category is chosen |
+| Auto-fill low confidence | Page could not be fully scraped — review all fields manually before saving |
+| Mobile layout not updating | Hard refresh the page (Ctrl+Shift+R / Cmd+Shift+R) to clear cached styles |
 
 **Diagnose Gemini directly:**
 ```
@@ -268,6 +313,7 @@ https://austpek-backend.onrender.com/api/description/test-gemini
 | Layer | Technology |
 |---|---|
 | Frontend | React 18, Create React App, Axios |
+| Responsive Layout | Custom `useResponsive()` hook (no external library) |
 | Backend | Node.js, Express, Multer |
 | Database | MongoDB + Mongoose (optional) |
 | AI — Images | Google Gemini 2.0 Flash API |

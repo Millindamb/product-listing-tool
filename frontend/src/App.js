@@ -47,89 +47,89 @@ const WEIGHT_RULES_FE = {
 };
 
 const PRODUCT_TITLE_FORMATS = {
-  "Basin Mixer":                    { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Tall Basin Mixer":               { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Sink Mixer":                     { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Pull-Out Sink Mixer":            { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Free Standing Bath Mixer":       { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Wall Mixer":                     { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Bath Spouts / Outlets":          { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Heated Towel Rails":             { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add size at end — consider Length" },
-  "Non-Heated Towel Rails":         { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add size at end — consider Length" },
-  "Robe Hooks":                     { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size needed (under 100mm)" },
-  "Toilet Accessories":             { parts:["Brand","Collection","Product Type","Colour"],                           note:"" },
-  "Soap Dish Holders":              { parts:["Brand","Collection","Product Type","Colour"],                           note:"" },
-  "Channel Grates":                 { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add size at end — consider Length" },
-  "Point Drains":                   { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add size at end — consider Length" },
-  "Basin Wastes":                   { parts:["Brand","Collection","Product Type","Colour"],                           note:"" },
-  "Shower on Rails":                { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size for basic showers (under 100mm)" },
-  "Hand Held Showers":              { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size for basic showers (under 100mm)" },
-  "Shower Systems":                 { parts:["Brand","Collection","Product Type","Colour"],                           note:"No size for basic showers (under 100mm)" },
-  "Shower Heads":                   { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add Size — consider Head dimension" },
-  "Shower Arms":                    { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"Add Size — consider Height or Length according to direction of Arm" },
-  "Framed Shower Screens":          { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"], note:"" },
-  "Semi-Frameless Shower Screens":  { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"], note:"" },
-  "Frameless Shower Screens":       { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"], note:"" },
-  "Corner Baths":                   { parts:["Brand","Collection","Type of Bath","Colour","Size"],                    note:"Consider Length" },
-  "Freestanding Baths":             { parts:["Brand","Collection","Type of Bath","Colour","Size"],                    note:"Consider Length" },
-  "Spa Baths":                      { parts:["Brand","Collection","Type of Bath","Colour","Size"],                    note:"Consider Length" },
-  "Built in Baths":                 { parts:["Brand","Collection","Type of Bath","Colour","Size"],                    note:"Consider Length" },
-  "Wall Hung Vanities":             { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"],note:"Consider Length" },
-  "Floor Standing Vanities":        { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"],note:"Consider Length" },
-  "Tall Boys":                      { parts:["Brand","Collection","Colour","Size","Vanity Type"],                     note:"Consider Length and Height" },
-  "Mirrored Shaving Cabinets":      { parts:["Brand","Collection","Colour","Cabinet Type","Size"],                    note:"Consider Length or Height according to direction of cabinet" },
-  "LED Mirrored Shaving Cabinets":  { parts:["Brand","Collection","Colour","Cabinet Type","Size"],                    note:"Consider Length or Height according to direction of cabinet" },
-  "Above Counter Basins":           { parts:["Brand","Collection","Basin Type","Colour","Size"],                      note:"Consider Length" },
-  "Under Counter Basins":           { parts:["Brand","Collection","Basin Type","Colour","Size"],                      note:"Consider Length" },
-  "Wall Hung Basins":               { parts:["Brand","Collection","Basin Type","Colour","Size"],                      note:"Consider Length" },
-  "Freestanding Basins":            { parts:["Brand","Collection","Basin Type","Colour","Size"],                      note:"Consider Length AND Height" },
-  "Undermount Sinks":               { parts:["Brand","Collection","Sink Type","Colour","Size"],                       note:'Consider Length. Add "Kitchen Accessories" if applicable' },
-  "Overmount Sinks":                { parts:["Brand","Collection","Sink Type","Colour","Size"],                       note:'Consider Length. Add "Kitchen Accessories" if applicable' },
-  "Laundry Sinks":                  { parts:["Brand","Collection","Sink Type","Colour","Size"],                       note:"Consider Length" },
-  "Kitchen Accessories":            { parts:["Brand","Collection","Product Type","Colour","Size"],                    note:"" },
-  "LED Mirrors":                    { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],             note:"Consider Length and Height" },
-  "Non-LED Mirrors":                { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],             note:"Consider Length and Height" },
-  "Magnifying Mirrors":             { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],             note:"Consider Length and Height" },
-  "Heated Towel Rails (Heating)":   { parts:["Brand","Collection","Type of Heating","Colour","Size"],                 note:"Size if applicable" },
-  "Hand Dryers":                    { parts:["Brand","Collection","Type","Colour","Size"],                            note:"Use full dimension for Size" },
-  "Wall Lights":                    { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                note:"Consider Length or Height according to direction of the light" },
-  "Exhausts":                       { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                note:"Size if applicable" },
+  "Basin Mixer":                    { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Tall Basin Mixer":               { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Sink Mixer":                     { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Pull-Out Sink Mixer":            { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Free Standing Bath Mixer":       { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Wall Mixer":                     { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Bath Spouts / Outlets":          { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Heated Towel Rails":             { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add size at end — consider Length" },
+  "Non-Heated Towel Rails":         { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add size at end — consider Length" },
+  "Robe Hooks":                     { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size needed (under 100mm)" },
+  "Toilet Accessories":             { parts:["Brand","Collection","Product Type","Colour"],                            note:"" },
+  "Soap Dish Holders":              { parts:["Brand","Collection","Product Type","Colour"],                            note:"" },
+  "Channel Grates":                 { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add size at end — consider Length" },
+  "Point Drains":                   { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add size at end — consider Length" },
+  "Basin Wastes":                   { parts:["Brand","Collection","Product Type","Colour"],                            note:"" },
+  "Shower on Rails":                { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size for basic showers (under 100mm)" },
+  "Hand Held Showers":              { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size for basic showers (under 100mm)" },
+  "Shower Systems":                 { parts:["Brand","Collection","Product Type","Colour"],                            note:"No size for basic showers (under 100mm)" },
+  "Shower Heads":                   { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add Size — consider Head dimension" },
+  "Shower Arms":                    { parts:["Brand","Collection","Product Type","Size","Colour"],                     note:"Add Size — consider Height or Length according to direction of Arm" },
+  "Framed Shower Screens":          { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"],  note:"" },
+  "Semi-Frameless Shower Screens":  { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"],  note:"" },
+  "Frameless Shower Screens":       { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"],  note:"" },
+  "Corner Baths":                   { parts:["Brand","Collection","Type of Bath","Colour","Size"],                     note:"Consider Length" },
+  "Freestanding Baths":             { parts:["Brand","Collection","Type of Bath","Colour","Size"],                     note:"Consider Length" },
+  "Spa Baths":                      { parts:["Brand","Collection","Type of Bath","Colour","Size"],                     note:"Consider Length" },
+  "Built in Baths":                 { parts:["Brand","Collection","Type of Bath","Colour","Size"],                     note:"Consider Length" },
+  "Wall Hung Vanities":             { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"], note:"Consider Length" },
+  "Floor Standing Vanities":        { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"], note:"Consider Length" },
+  "Tall Boys":                      { parts:["Brand","Collection","Colour","Size","Vanity Type"],                      note:"Consider Length and Height" },
+  "Mirrored Shaving Cabinets":      { parts:["Brand","Collection","Colour","Cabinet Type","Size"],                     note:"Consider Length or Height according to direction of cabinet" },
+  "LED Mirrored Shaving Cabinets":  { parts:["Brand","Collection","Colour","Cabinet Type","Size"],                     note:"Consider Length or Height according to direction of cabinet" },
+  "Above Counter Basins":           { parts:["Brand","Collection","Basin Type","Colour","Size"],                       note:"Consider Length" },
+  "Under Counter Basins":           { parts:["Brand","Collection","Basin Type","Colour","Size"],                       note:"Consider Length" },
+  "Wall Hung Basins":               { parts:["Brand","Collection","Basin Type","Colour","Size"],                       note:"Consider Length" },
+  "Freestanding Basins":            { parts:["Brand","Collection","Basin Type","Colour","Size"],                       note:"Consider Length AND Height" },
+  "Undermount Sinks":               { parts:["Brand","Collection","Sink Type","Colour","Size"],                        note:'Consider Length. Add "Kitchen Accessories" if applicable' },
+  "Overmount Sinks":                { parts:["Brand","Collection","Sink Type","Colour","Size"],                        note:'Consider Length. Add "Kitchen Accessories" if applicable' },
+  "Laundry Sinks":                  { parts:["Brand","Collection","Sink Type","Colour","Size"],                        note:"Consider Length" },
+  "Kitchen Accessories":            { parts:["Brand","Collection","Product Type","Colour","Size"],                     note:"" },
+  "LED Mirrors":                    { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],              note:"Consider Length and Height" },
+  "Non-LED Mirrors":                { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],              note:"Consider Length and Height" },
+  "Magnifying Mirrors":             { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],              note:"Consider Length and Height" },
+  "Heated Towel Rails (Heating)":   { parts:["Brand","Collection","Type of Heating","Colour","Size"],                  note:"Size if applicable" },
+  "Hand Dryers":                    { parts:["Brand","Collection","Type","Colour","Size"],                             note:"Use full dimension for Size" },
+  "Wall Lights":                    { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                 note:"Consider Length or Height according to direction of the light" },
+  "Exhausts":                       { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                 note:"Size if applicable" },
   "Bidets & Washlets":              { parts:["Brand","Collection","Bidet Type","Control Type","Washlet Shape","Colour"],note:"Washlet Shape if applicable" },
-  "Back to Wall Smart Toilets":     { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Rimless Smart Toilets":          { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Wall Hung Smart Toilets":        { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Back to Wall Toilets":           { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Close Coupled Toilets":          { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Wall Faced Toilets":             { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "Rimless Toilets":                { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
-  "In-Wall Cisterns":               { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
+  "Back to Wall Smart Toilets":     { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Rimless Smart Toilets":          { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Wall Hung Smart Toilets":        { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Back to Wall Toilets":           { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Close Coupled Toilets":          { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Wall Faced Toilets":             { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "Rimless Toilets":                { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
+  "In-Wall Cisterns":               { parts:["Brand","Collection","Type","Colour"],                                    note:"" },
   "Integrated Smart Toilets":       { parts:["Brand","Collection","Toilet Type","Bidet Type","Control Type","Washlet Shape","Colour"], note:"Smart Toilet format" },
-  "Rectangle Tiles":                { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],   note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
-  "Square Tiles":                   { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],   note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
-  "Mosaic Tiles":                   { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],   note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
-  "Laundry Cabinets":               { parts:["Brand","Collection","Product Type","Colour","Size"],                    note:"Consider Length" },
+  "Rectangle Tiles":                { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],    note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
+  "Square Tiles":                   { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],    note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
+  "Mosaic Tiles":                   { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],    note:"Always state unit: PER BOX / PER PACK / PER SLAB / PER TILE" },
+  "Laundry Cabinets":               { parts:["Brand","Collection","Product Type","Colour","Size"],                     note:"Consider Length" },
 };
 
 const CATEGORY_TITLE_FORMATS = {
-  "Tapware":        { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"No size for basic tapware (under 100mm)" },
-  "Accessories":    { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"" },
-  "Showers":        { parts:["Brand","Collection","Product Type","Size","Colour"],                    note:"No size for basic showers (under 100mm)" },
-  "Shower Screens": { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"], note:"" },
-  "Bathtubs":       { parts:["Brand","Collection","Type of Bath","Colour","Size"],                    note:"Consider Length" },
-  "Vanities":       { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"],note:"Consider Length" },
-  "Shaving Cabinet":{ parts:["Brand","Collection","Colour","Cabinet Type","Size"],                    note:"Consider Length or Height" },
-  "Basins":         { parts:["Brand","Collection","Basin Type","Colour","Size"],                      note:"Consider Length" },
-  "Sinks":          { parts:["Brand","Collection","Sink Type","Colour","Size"],                       note:"Consider Length" },
-  "Mirrors":        { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],             note:"Consider Length and Height" },
-  "Heating":        { parts:["Brand","Collection","Type of Heating","Colour","Size"],                 note:"" },
-  "Lighting":       { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                note:"Consider Length or Height" },
+  "Tapware":        { parts:["Brand","Collection","Product Type","Size","Colour"],                      note:"No size for basic tapware (under 100mm)" },
+  "Accessories":    { parts:["Brand","Collection","Product Type","Size","Colour"],                      note:"" },
+  "Showers":        { parts:["Brand","Collection","Product Type","Size","Colour"],                      note:"No size for basic showers (under 100mm)" },
+  "Shower Screens": { parts:["Brand","Collection","Framing","Type of Shower Screen","Colour","Size"],   note:"" },
+  "Bathtubs":       { parts:["Brand","Collection","Type of Bath","Colour","Size"],                      note:"Consider Length" },
+  "Vanities":       { parts:["Brand","Collection","Colour","Size","Bowl Configuration","Vanity Type"],  note:"Consider Length" },
+  "Shaving Cabinet":{ parts:["Brand","Collection","Colour","Cabinet Type","Size"],                      note:"Consider Length or Height" },
+  "Basins":         { parts:["Brand","Collection","Basin Type","Colour","Size"],                        note:"Consider Length" },
+  "Sinks":          { parts:["Brand","Collection","Sink Type","Colour","Size"],                         note:"Consider Length" },
+  "Mirrors":        { parts:["Brand","Collection","Shape","Mirror Type","Colour","Size"],               note:"Consider Length and Height" },
+  "Heating":        { parts:["Brand","Collection","Type of Heating","Colour","Size"],                   note:"" },
+  "Lighting":       { parts:["Brand","Collection","Type of Lighting","Colour","Size"],                  note:"Consider Length or Height" },
   "Bidets":         { parts:["Brand","Collection","Bidet Type","Control Type","Washlet Shape","Colour"],note:"" },
-  "Toilets":        { parts:["Brand","Collection","Type","Colour"],                                   note:"" },
+  "Toilets":        { parts:["Brand","Collection","Type","Colour"],                                     note:"" },
   "Smart Toilet":   { parts:["Brand","Collection","Toilet Type","Bidet Type","Control Type","Washlet Shape","Colour"], note:"" },
-  "Tiles":          { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],   note:"Always state unit" },
-  "Kitchen":        { parts:["Brand","Collection","Product Type","Colour","Size"],                    note:"" },
-  "Laundry":        { parts:["Brand","Collection","Product Type","Colour","Size"],                    note:"Consider Length" },
-  "default":        { parts:["Brand","Collection","Product Type","Colour"],                           note:"" },
+  "Tiles":          { parts:["Brand","Collection","Colour","Finish","Size","Shape Tile (PER BOX)"],     note:"Always state unit" },
+  "Kitchen":        { parts:["Brand","Collection","Product Type","Colour","Size"],                      note:"" },
+  "Laundry":        { parts:["Brand","Collection","Product Type","Colour","Size"],                      note:"Consider Length" },
+  "default":        { parts:["Brand","Collection","Product Type","Colour"],                             note:"" },
 };
 
 const ALL_CATEGORIES = [
@@ -553,7 +553,7 @@ function PricingPanel({ category, brand, supplierUrl, sku, onResult, autoRrp, au
             ))}
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:10, justifyContent:"center", flexWrap:"wrap" }}>
-            <Badge ok={result.marginOk}>{result.marginOk ? "✓ Margin OK" : "✗ Margin Too Low"}</Badge>
+            <Badge ok={result.marginOk}>{result.marginOk ? <><i class="fa-solid fa-check"></i> Margin OK</> : <>Margin Too Low <i className="fa-solid fa-arrow-trend-down"></i></>}</Badge>
             <span style={{ fontSize:12, color:"#888" }}>Margin: ${result.actualMargin} / Required: ${result.required}</span>
             {result.weightNote && <span style={{ fontSize:11, color:"#666" }}>{result.weightNote}</span>}
           </div>
@@ -789,6 +789,7 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize, autoFil
     const files = Array.from(e.target.files).slice(0, 2);
     setImages(files); setPreviews(files.map(f => URL.createObjectURL(f)));
   };
+  
   const removeImage = (i) => {
     setImages(prev   => prev.filter((_,idx)=>idx!==i));
     setPreviews(prev => prev.filter((_,idx)=>idx!==i));
@@ -797,17 +798,17 @@ function DescriptionBuilder({ title, category, sharedColour, sharedSize, autoFil
   const featureBlock = fields.map(f => `• ${FEATURE_LABELS[f] || f}: ${features[f] || ""}`).join("\n");
   const activeDesc   = aiDesc || "[Click Generate AI Description below]";
   const fullDescription =
-`**${(title || "PRODUCT TITLE").toUpperCase()}**
-Also Available in ${colours || "______"}
-${sizes ? `Also Available in Sizes: ${sizes}` : ""}
+  `**${(title || "PRODUCT TITLE").toUpperCase()}**
+  Also Available in ${colours || "______"}
+  ${sizes ? `Also Available in Sizes: ${sizes}` : ""}
 
-**Product Features:**
-${featureBlock}
+  **Product Features:**
+  ${featureBlock}
 
-**Warranty Information:**
-${warrantyRows.filter(r => r.trim()).map(r => `• ${r.trim()}`).join("\n")}
+  **Warranty Information:**
+  ${warrantyRows.filter(r => r.trim()).map(r => `• ${r.trim()}`).join("\n")}
 
-${activeDesc}`.trim();
+  ${activeDesc}`.trim();
 
   const generateAI = async () => {
     setAiLoading(true); setAiError(""); setAiNote("");
@@ -1233,7 +1234,7 @@ function RepriceCalculator() {
 
   return (
     <Card>
-      <SectionTitle><i className="fa-solid fa-bolt"></i> Competitive Repricing Calculator</SectionTitle>
+      <SectionTitle><i className="fa-solid fa-square-root-variable"></i> Competitive Repricing Calculator</SectionTitle>
       <div style={{ fontSize:11, color:"#666", marginBottom:14, padding:"6px 10px", background:"#0d0d0d", borderRadius:6 }}>
         From Special Guidelines: Potential Margin = Competitor Price - Cost Price (inc GST)
       </div>
@@ -1283,8 +1284,8 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:16, flexWrap:"wrap", gap:10 }}>
         <div style={{ fontSize:16, fontWeight:700 }}>Product Queue ({products.length})</div>
         <div style={{ display:"flex", gap:8, flexWrap:"wrap" }}>
-          <Btn onClick={onExportCSV}  variant="primary" disabled={products.length===0}><i className="fa-solid fa-download"></i>{!isMobile && " Shopify Import CSV"}</Btn>
-          <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}><i className="fa-solid fa-download"></i>{!isMobile && " Final Pricing + Competitor (.xlsx)"}</Btn>
+          <Btn onClick={onExportCSV}  variant="primary" disabled={products.length===0}><i className="fa-solid fa-cloud-arrow-down"></i>{!isMobile && " Shopify Import CSV"}</Btn>
+          <Btn onClick={onExportXlsx} variant="success" disabled={products.length===0}><i className="fa-solid fa-cloud-arrow-down"></i>{!isMobile && " Final Pricing + Competitor (.xlsx)"}</Btn>
         </div>
       </div>
       <div style={{ background:"#0d0d0d", borderRadius:8, padding:"10px 14px", marginBottom:16, fontSize:11, color:"#666", border:"1px solid #1a1a1a" }}>
@@ -1312,7 +1313,7 @@ function ProductList({ products, onDelete, onExportXlsx, onExportCSV }) {
                   <div style={{ fontSize:gold?16:13, fontWeight:gold?800:400, color:gold?"#c9933a":"#aaa" }}>{val}</div>
                 </div>
               ))}
-              <Badge ok={p.marginOk}>{p.marginOk?"✓ Margin":"✗ Margin"}</Badge>
+              <Badge ok={p.marginOk}>{p.marginOk?<><i className="fa-solid fa-check"></i> Margin</>:<><i className="fa-solid fa-xmark"></i> Margin</>}</Badge>
               <Btn onClick={() => onDelete(p._id||i)} variant="danger" small><i className="fa-solid fa-xmark"></i></Btn>
             </div>
           </div>
@@ -1435,8 +1436,8 @@ export default function App() {
 
   const NAV=[
     { key:"form",    label: isMobile ? "Add" : <><i className="fa-solid fa-plus"></i> Add Product</> },
-    { key:"queue",   label: isMobile ? `Queue (${products.length})` : <><i className="fa-solid fa-list"></i> Queue ({products.length})</> },
-    { key:"reprice", label: isMobile ? "Reprice" : <><i className="fa-solid fa-bolt"></i> Reprice Tool</> },
+    { key:"queue",   label: isMobile ? `Queue (${products.length})` : <><i className="fa-solid fa-list"></i> Queue [ {products.length} ]</> },
+    { key:"reprice", label: isMobile ? "Reprice" : <><i className="fa-solid fa-coins"></i> Reprice Tool <i className="fa-solid fa-angle-right"></i></> },
   ];
 
   // Mobile section nav for the form tab
@@ -1457,7 +1458,7 @@ export default function App() {
         display:"flex", alignItems:"center", justifyContent:"space-between", height: isMobile ? 48 : 56, position:"sticky", top:0, zIndex:100 }}>
         <div style={{ display:"flex", alignItems:"center", gap: isMobile ? 8 : 12 }}>
           <div style={{ fontSize: isMobile ? 15 : 18, fontWeight:900, color:"#c9933a", letterSpacing:1 }}>AUSTPEK</div>
-          {!isMobile && <div style={{ fontSize:12, color:"#555", marginTop:2 }}><i className="fa-solid fa-screwdriver-wrench"></i> Product Listing Tool</div>}
+          {!isMobile && <div style={{ fontSize:12, color:"#555", marginTop:2 }}><i className="fa-solid fa-box-open"></i> Product Listing Tool</div>}
         </div>
         <div style={{ display:"flex", gap:4 }}>
           {NAV.map(n=>(
@@ -1667,7 +1668,7 @@ function ProductDetailsSection({
         <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
           <div style={{ width:32, height:32, background:"#c9933a22", borderRadius:8,
             display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>
-            <i className="fa-solid fa-wand-magic-sparkles" style={{ color:"#c9933a", fontSize:14 }}></i>
+            <i className="fa-solid fa-list-check" style={{ color:"#c9933a", fontSize:14 }}></i>
           </div>
           <div>
             <div style={{ fontSize:13, fontWeight:800, color:"#c9933a", letterSpacing:.3 }}>AUTO-FILL FROM URL</div>
@@ -1738,7 +1739,7 @@ function ProductDetailsSection({
 
       <div style={{ fontSize:11, color:"#c9933a", background:"#c9933a11", border:"1px solid #c9933a22",
         borderRadius:6, padding:"5px 10px", marginBottom:14, display:"flex", alignItems:"center", gap:6 }}>
-        <i className="fa-solid fa-bolt"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
+        <i className="fa-solid fa-list"></i> Brand, Collection, Colour and Size sync automatically to Title Builder and Description
       </div>
 
       <Field label="SKU *"><Input value={sku} onChange={setSku} placeholder="ABC-123" /></Field>

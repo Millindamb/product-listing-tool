@@ -476,12 +476,12 @@ router.post("/fetch-rrp", async (req, res) => {
 
     ${pageContent}`
         : `You are a pricing expert for Australian bathroom products.
-    A supplier page could not be accessed.
-    Brand: ${brandHint || "unknown"} | Product: ${productHint || "unknown"} | SKU: ${sku || "not provided"} | URL: ${supplierUrl || ""}
-    If you can reasonably estimate this product's Australian RRP (inc GST), return:
-    {"rrp": 190, "includesGST": true, "source": "estimated"}
-    Otherwise: {"rrp": null, "message": "Supplier site blocked — enter RRP manually"}
-    Return ONLY valid JSON, no markdown.`;
+        A supplier page could not be accessed.
+        Brand: ${brandHint || "unknown"} | Product: ${productHint || "unknown"} | SKU: ${sku || "not provided"} | URL: ${supplierUrl || ""}
+        If you can reasonably estimate this product's Australian RRP (inc GST), return:
+        {"rrp": 190, "includesGST": true, "source": "estimated"}
+        Otherwise: {"rrp": null, "message": "Supplier site blocked — enter RRP manually"}
+        Return ONLY valid JSON, no markdown.`;
 
   try {
     const geminiRes = await axios.post(

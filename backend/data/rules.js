@@ -26,27 +26,27 @@ const TITLE_FORMATS = {
 
 // ── 2. MINIMUM MARGIN RULES ───────────────────────────────────────────────────
 const MARGIN_RULES = [
-  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp < 150,  margin: 35,  note: "If CP+$35 > $150, use $60 margin instead", capAtRRP: true },
-  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp >= 150, margin: 60,  note: "CP is over $150", capAtRRP: true },
+  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp < 150,  margin: 35,                   note: "If CP+$35 > $150, use $60 margin instead", capAtRRP: true },
+  { match: (cat, sp, cp) => ["Tapware","Accessories","Showers"].includes(cat) && cp >= 150, margin: 60,                   note: "CP is over $150",                          capAtRRP: true },
   { match: (cat, sp)     => cat === "Accessories" && sp > 1500,                             margin: 175, capAtRRP: false },
   { match: (cat, sp)     => cat === "Accessories" && sp > 800,                              margin: 150, capAtRRP: false },
-  { match: (cat)         => cat === "Toilet Paper Holders",  hardMinPrice: 30,  capAtRRP: false },
-  { match: (cat)         => cat === "Robe Hooks",            hardMinPrice: 20,  capAtRRP: false },
-  { match: (cat)         => ["Heating","Lighting"].includes(cat),                margin: 100, capAtRRP: false, note: "Fine to exceed RRP" },
-  { match: (cat)         => cat === "Shower Screens Wall-to-Wall",               margin: 250, capAtRRP: false },
-  { match: (cat)         => cat === "Shower Screens Covey Return Panel",         margin: 125, capAtRRP: false },
-  { match: (cat)         => cat === "Bathtubs",                                  margin: 300, capAtRRP: false },
-  { match: (cat)         => cat === "Riva Transparent Bathtubs",                 margin: 700, capAtRRP: false },
-  { match: (cat)         => cat === "Spa Bathtubs",                              margin: 500, capAtRRP: false },
-  { match: (cat)         => ["Vanities","Cabinets","Laundry Cabinets"].includes(cat), margin: 250, capAtRRP: false },
-  { match: (cat)         => cat === "Basins",  margin: 65,  capAtRRP: false },
-  { match: (cat)         => cat === "Sinks",   margin: 80,  capAtRRP: false },
-  { match: (cat)         => cat === "Toilets", margin: 175, capAtRRP: false },
-  { match: (cat)         => cat === "Toilets Johnson Suisse", margin: 300, capAtRRP: false },
-  { match: (cat)         => cat === "Toilets Under $300",     hardMinPrice: 300, capAtRRP: false },
-  { match: (cat)         => cat === "Shaving Cabinet", margin: 150, capAtRRP: false },
-  { match: (cat)         => cat === "Tiles",   margin: 35,  capAtRRP: false },
-  { match: (cat)         => cat === "Saunas",  margin: 300, capAtRRP: false },
+  { match: (cat)         => cat === "Toilet Paper Holders",                           hardMinPrice: 30,  capAtRRP: false },
+  { match: (cat)         => cat === "Robe Hooks",                                     hardMinPrice: 20,  capAtRRP: false },
+  { match: (cat)         => ["Heating","Lighting"].includes(cat),                           margin: 100, capAtRRP: false, note: "Fine to exceed RRP" },
+  { match: (cat)         => cat === "Shower Screens Wall-to-Wall",                          margin: 250, capAtRRP: false },
+  { match: (cat)         => cat === "Shower Screens Covey Return Panel",                    margin: 125, capAtRRP: false },
+  { match: (cat)         => cat === "Bathtubs",                                             margin: 300, capAtRRP: false },
+  { match: (cat)         => cat === "Riva Transparent Bathtubs",                            margin: 700, capAtRRP: false },
+  { match: (cat)         => cat === "Spa Bathtubs",                                         margin: 500, capAtRRP: false },
+  { match: (cat)         => ["Vanities","Cabinets","Laundry Cabinets"].includes(cat),       margin: 250, capAtRRP: false },
+  { match: (cat)         => cat === "Basins",                                               margin: 65,  capAtRRP: false },
+  { match: (cat)         => cat === "Sinks",                                                margin: 80,  capAtRRP: false },
+  { match: (cat)         => cat === "Toilets",                                              margin: 175, capAtRRP: false },
+  { match: (cat)         => cat === "Toilets Johnson Suisse",                               margin: 300, capAtRRP: false },
+  { match: (cat)         => cat === "Toilets Under $300",                             hardMinPrice: 300, capAtRRP: false },
+  { match: (cat)         => cat === "Shaving Cabinet",                                      margin: 150, capAtRRP: false },
+  { match: (cat)         => cat === "Tiles",                                                margin: 35,  capAtRRP: false },
+  { match: (cat)         => cat === "Saunas",                                               margin: 300, capAtRRP: false },
 ];
 
 function getMarginRule(category, sp = 0, cp = 0) {
@@ -316,249 +316,249 @@ const PRODUCT_TAG_MAP = {
 
   // ── TAPWARE ────────────────────────────────────────────────────────────────
   "Basin Mixer": {
-    collection: "Basin Mixers",
-    schema: "styleOnly",
+    collection:   "Basin Mixers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional", "Smart Bathroom"],
   },
   "Tall Basin Mixer": {
-    collection: "Tall Basin Mixers",
-    schema: "styleOnly",
+    collection:   "Tall Basin Mixers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
   "Sink Mixer": {
-    collection: "Sink Mixers",
-    schema: "styleOnly",
+    collection:   "Sink Mixers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
   "Pull-Out Sink Mixer": {
-    collection: "Pull-Out Sink Mixers",
-    schema: "styleOnly",
+    collection:   "Pull-Out Sink Mixers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary"],
   },
   "Free Standing Bath Mixer": {
-    collection: "Free Standing Bath Mixers",
-    schema: "styleOnly",
+    collection:   "Free Standing Bath Mixers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
 
   // ── ACCESSORIES ────────────────────────────────────────────────────────────
   "Heated Towel Rails": {
-    collection: "Heated Towel Rails",
-    schema: "configSize",
-    configOptions: ["Towel Bars", "Single Towel Rails", "Double Towel Rails"],
-    extraFields: ["style"],
+    collection:   "Heated Towel Rails",
+    schema:       "configSize",
+    configOptions:["Towel Bars", "Single Towel Rails", "Double Towel Rails"],
+    extraFields:  ["style"],
     styleOptions: ["Smart Bathrooms"],
   },
   "Non-Heated Towel Rails": {
-    collection: "Non-Heated Towel Rails",
-    schema: "configOnly",
-    configOptions: ["Towel Rails"],
+    collection:   "Non-Heated Towel Rails",
+    schema:       "configOnly",
+    configOptions:["Towel Rails"],
   },
   "Robe Hooks": {
-    collection: "Robe Hooks",
-    schema: "styleOnly",
+    collection:   "Robe Hooks",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
   "Toilet Accessories": {
-    collection: "Toilet Accessories",
-    schema: "brandColourOnly",
+    collection:   "Toilet Accessories",
+    schema:       "brandColourOnly",
   },
   "Soap Dish Holders": {
-    collection: "Soap Dish Holders",
-    schema: "brandColourOnly",
+    collection:   "Soap Dish Holders",
+    schema:       "brandColourOnly",
   },
 
   // ── SHOWERS ────────────────────────────────────────────────────────────────
   "Shower on Rails": {
-    collection: "Shower on Rails",
-    schema: "styleOnly",
+    collection:   "Shower on Rails",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional", "Hamptons"],
   },
   "Hand Held Showers": {
-    collection: "Hand Held Showers",
-    schema: "styleOnly",
+    collection:   "Hand Held Showers",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary"],
   },
   "Shower Systems": {
-    collection: "Shower Systems",
-    schema: "styleOnly",
+    collection:   "Shower Systems",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
   "Shower Heads": {
-    collection: "Shower Heads",
-    schema: "styleOnly",
+    collection:   "Shower Heads",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Traditional"],
   },
   "Shower Arms": {
-    collection: "Shower Arms",
-    schema: "brandColourOnly",
+    collection:   "Shower Arms",
+    schema:       "brandColourOnly",
   },
 
   // ── KITCHEN ────────────────────────────────────────────────────────────────
   "Undermount Sinks": {
-    collection: "Undermount Sinks",
-    schema: "configOnly",
-    configOptions: ["Single Bowl", "Double Bowl"],
+    collection:   "Undermount Sinks",
+    schema:       "configOnly",
+    configOptions:["Single Bowl", "Double Bowl"],
   },
   "Overmount Sinks": {
-    collection: "Overmount Sinks",
-    schema: "configOnly",
-    configOptions: ["Single Bowl", "Double Bowl"],
+    collection:   "Overmount Sinks",
+    schema:       "configOnly",
+    configOptions:["Single Bowl", "Double Bowl"],
   },
   "Kitchen Accessories": {
-    collection: "Kitchen Accessories",
-    schema: "brandColourOnly",
+    collection:   "Kitchen Accessories",
+    schema:       "brandColourOnly",
   },
 
   // ── BATHS ──────────────────────────────────────────────────────────────────
   "Corner Baths": {
-    collection: "Corner Baths",
-    schema: "styleOnly",
+    collection:   "Corner Baths",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary"],
   },
   "Freestanding Baths": {
-    collection: "Freestanding Baths",
-    schema: "styleOnly",
+    collection:   "Freestanding Baths",
+    schema:       "styleOnly",
     styleOptions: ["Contemporary", "Luxury"],
   },
   "Spa Baths": {
-    collection: "Spa Baths",
-    schema: "brandColourOnly",
+    collection:   "Spa Baths",
+    schema:       "brandColourOnly",
   },
   "Built in Baths": {
-    collection: "Built In Baths",
-    schema: "brandColourOnly",
+    collection:   "Built In Baths",
+    schema:       "brandColourOnly",
   },
 
   // ── SHOWER SCREENS ─────────────────────────────────────────────────────────
   "Framed Shower Screens": {
-    collection: "Framed Shower Screens",
-    schema: "configOnly",
-    configOptions: ["Pivot", "Sliding"],
+    collection:   "Framed Shower Screens",
+    schema:       "configOnly",
+    configOptions:["Pivot", "Sliding"],
   },
   "Semi-Frameless Shower Screens": {
-    collection: "Semi-Frameless Shower Screens",
-    schema: "configOnly",
-    configOptions: ["Pivot", "Sliding"],
+    collection:   "Semi-Frameless Shower Screens",
+    schema:       "configOnly",
+    configOptions:["Pivot", "Sliding"],
   },
   "Frameless Shower Screens": {
-    collection: "Frameless Shower Screens",
-    schema: "brandColourOnly",
+    collection:   "Frameless Shower Screens",
+    schema:       "brandColourOnly",
   },
 
   // ── VANITIES ───────────────────────────────────────────────────────────────
   "Wall Hung Vanities": {
-    collection: "Wall Hung Vanities",
-    schema: "configSize",
-    configOptions: ["Single Bowl", "Double Bowl"],
+    collection:   "Wall Hung Vanities",
+    schema:       "configSize",
+    configOptions:["Single Bowl", "Double Bowl"],
   },
   "Floor Standing Vanities": {
-    collection: "Floor Standing Vanities",
-    schema: "configSize",
-    configOptions: ["Single Bowl", "Double Bowl"],
+    collection:   "Floor Standing Vanities",
+    schema:       "configSize",
+    configOptions:["Single Bowl", "Double Bowl"],
   },
   "Tall Boys": {
-    collection: "Tall Boys",
-    schema: "brandColourOnly",
+    collection:   "Tall Boys",
+    schema:       "brandColourOnly",
   },
 
   // ── BASINS ─────────────────────────────────────────────────────────────────
   "Above Counter Basins": {
-    collection: "Above Counter Basins",
-    schema: "shapeOnly",
+    collection:   "Above Counter Basins",
+    schema:       "shapeOnly",
     shapeOptions: ["Round", "Rectangle", "Oval"],
   },
   "Under Counter Basins": {
-    collection: "Under Counter Basins",
-    schema: "brandColourOnly",
+    collection:   "Under Counter Basins",
+    schema:       "brandColourOnly",
   },
   "Wall Hung Basins": {
-    collection: "Wall Hung Basins",
-    schema: "brandColourOnly",
+    collection:   "Wall Hung Basins",
+    schema:       "brandColourOnly",
   },
 
   // ── MIRRORS ────────────────────────────────────────────────────────────────
   "LED Mirrors": {
-    collection: "LED Mirrors",
-    schema: "shapeOnly",
+    collection:   "LED Mirrors",
+    schema:       "shapeOnly",
     shapeOptions: ["Round", "Rectangle"],
   },
   "Non-LED Mirrors": {
-    collection: "Non-LED Mirrors",
-    schema: "shapeOnly",
+    collection:   "Non-LED Mirrors",
+    schema:       "shapeOnly",
     shapeOptions: ["Round", "Rectangle"],
   },
   "Magnifying Mirrors": {
-    collection: "Magnifying Mirrors",
-    schema: "brandColourOnly",
+    collection:   "Magnifying Mirrors",
+    schema:       "brandColourOnly",
   },
 
   // ── LIGHTING ───────────────────────────────────────────────────────────────
   "Wall Lights": {
-    collection: "Wall Lights",
-    schema: "styleOnly",
+    collection:   "Wall Lights",
+    schema:       "styleOnly",
     styleOptions: ["Modern", "Contemporary"],
   },
   "Exhausts": {
-    collection: "Exhausts",
-    schema: "brandColourOnly",
+    collection:   "Exhausts",
+    schema:       "brandColourOnly",
   },
 
   // ── LAUNDRY ────────────────────────────────────────────────────────────────
   "Laundry Cabinets": {
-    collection: "Laundry Cabinets",
-    schema: "sizeOnly",
+    collection:   "Laundry Cabinets",
+    schema:       "sizeOnly",
   },
   "Laundry Sinks": {
-    collection: "Laundry Sinks",
-    schema: "configOnly",
-    configOptions: ["Single Bowl", "Double Bowl"],
+    collection:   "Laundry Sinks",
+    schema:       "configOnly",
+    configOptions:["Single Bowl", "Double Bowl"],
   },
 
   // ── BIDETS ─────────────────────────────────────────────────────────────────
   "Bidets & Washlets": {
-    collection: "Bidets & Washlets",
-    schema: "styleOnly",
+    collection:   "Bidets & Washlets",
+    schema:       "styleOnly",
     styleOptions: ["Smart Bathroom"],
   },
 
   // ── TOILETS ────────────────────────────────────────────────────────────────
   "Back to Wall Smart Toilets": {
-    collection: "Back to Wall Smart Toilets",
-    schema: "styleOnly",
+    collection:   "Back to Wall Smart Toilets",
+    schema:       "styleOnly",
     styleOptions: ["Smart Bathroom"],
   },
   "Rimless Smart Toilets": {
-    collection: "Rimless Smart Toilets",
-    schema: "styleOnly",
+    collection:   "Rimless Smart Toilets",
+    schema:       "styleOnly",
     styleOptions: ["Smart Bathroom"],
   },
   "Wall Hung Smart Toilets": {
-    collection: "Wall Hung Smart Toilets",
-    schema: "styleOnly",
+    collection:   "Wall Hung Smart Toilets",
+    schema:       "styleOnly",
     styleOptions: ["Smart Bathroom"],
   },
 
   // ── TILES ──────────────────────────────────────────────────────────────────
   // Tiles have no Brand_ tag per the spec — only Size_, Colour_, Finish_
   "Rectangle Tiles": {
-    collection: "Rectangle Tiles",
-    schema: "tileSchema",
-    noBrand: true,
-    finishOptions: ["Matte", "Gloss"],
+    collection:   "Rectangle Tiles",
+    schema:       "tileSchema",
+    noBrand:      true,
+    finishOptions:["Matte", "Gloss"],
   },
   "Square Tiles": {
-    collection: "Square Tiles",
-    schema: "tileSchema",
-    noBrand: true,
-    finishOptions: ["Matte", "Gloss"],
+    collection:   "Square Tiles",
+    schema:       "tileSchema",
+    noBrand:      true,
+    finishOptions:["Matte", "Gloss"],
   },
   "Mosaic Tiles": {
     collection: "Mosaic Tiles",
-    noBrand: true,
-    schema: "brandColourOnly",  // reuse shell; noBrand removes Brand_
-    extraFields: ["finish"],
-    finishOptions: ["Matte", "Gloss"],
+    noBrand:      true,
+    schema:       "brandColourOnly",  // reuse shell; noBrand removes Brand_
+    extraFields:  ["finish"],
+    finishOptions:["Matte", "Gloss"],
   },
 };
 

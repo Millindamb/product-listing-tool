@@ -132,6 +132,16 @@ export default function App() {
     setSaving(false);
   };
 
+  // ── Reset all form fields ──────────────────────────────────────────────────
+  const resetForm = () => {
+    setSupplierUrl(""); setSku(""); setCategory(""); setProductType("");
+    setStyle(""); setGeneratedTitle(""); setPricing(null); setNotes("");
+    setSharedBrand(""); setSharedCollection(""); setSharedColour(""); setSharedSize("");
+    setAutoFilled(null); setAutoFilledRrp(null); setAutoFilledRrpGST(true);
+    setAutoFilling(false); setAutoFillMsg(""); setAutoFillPreview(null);
+    setMobileSection("details");
+  };
+
   // ── Delete product ─────────────────────────────────────────────────────────
   const deleteProduct = async (id) => {
     try { await axios.delete(`${API}/products/${id}`); } catch {}
@@ -201,7 +211,23 @@ export default function App() {
           <div style={{ fontSize: isMobile ? 15 : 18, fontWeight: 900, color: "#c9933a", letterSpacing: 1 }}>AUSTPEK</div>
           {!isMobile && <div style={{ fontSize: 12, color: "#555", marginTop: 2 }}><i className="fa-solid fa-box-open"></i> Product Listing Tool</div>}
         </div>
-        <div style={{ display: "flex", gap: 4 }}>
+        <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+          {tab === "form" && (
+            <button onClick={resetForm}
+              title="Reset all fields"
+              style={{
+                background: "transparent", border: "1px solid #333", borderRadius: 8,
+                padding: isMobile ? "5px 10px" : "6px 14px",
+                color: "#666", fontSize: isMobile ? 12 : 13, fontWeight: 600,
+                cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                transition: "all .15s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = "#ef4444"; e.currentTarget.style.color = "#ef4444"; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = "#333";    e.currentTarget.style.color = "#666";    }}>
+              <i className="fa-solid fa-rotate-left"></i>
+              {!isMobile && " Reset"}
+            </button>
+          )}
           {NAV.map(n => (
             <button key={n.key} onClick={() => setTab(n.key)}
               style={{
@@ -274,7 +300,7 @@ export default function App() {
                   )}
                   <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
                     <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                      {saving ? <>Saving <i className="fa-solid fa-spinner fa-spin"></i></> : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
+                      {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
                     </Btn>
                     {saveMsg && (
                       <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>{saveMsg}</span>
@@ -324,7 +350,7 @@ export default function App() {
                 {/* Save button always visible */}
                 <div style={{ display: "flex", gap: 12, alignItems: "center", padding: "8px 0" }}>
                   <Btn onClick={saveProduct} disabled={saving} variant="primary">
-                    {saving ? <>Saving <i className="fa-solid fa-spinner fa-spin"></i></>: <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
+                    {saving ? "Saving..." : <><i className="fa-solid fa-floppy-disk"></i> Save to Queue</>}
                   </Btn>
                   {saveMsg && (
                     <span style={{ fontSize: 13, color: saveMsg.includes("✓") ? "#16a34a" : "#ef4444" }}>{saveMsg}</span>
@@ -352,7 +378,7 @@ export default function App() {
                 ["RRP (when not provided)",     "= Sale Price x 1.10"              ],
                 ["Cost Price (inc GST)",        "= Cost Price (ex GST) x 1.10"     ],
                 ["Cost Price (alt)",            "= RRP x 0.65"                     ],
-                ["Potential Margin",            "= Competitor Price - CP (inc GST)"],
+                ["Potential Margin",            "= Competitor Price - CP (inc GST)" ],
               ].map(([label, formula]) => (
                 <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid #1a1a1a", fontSize: 12, flexWrap: "wrap", gap: 4 }}>
                   <span style={{ color: "#888" }}>{label}</span>
